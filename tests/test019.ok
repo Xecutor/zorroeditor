@@ -1,0 +1,3 @@
+get key{somekey}
+1
+set key{somekey}=hello

@@ -1,0 +1,9 @@
+create A:x=1
+create B:x=1,y=2
+destroy B:x=1,y=2
+destroy A:x=1
+create A:x=3
+create B:x=3,y=4
+destroy B:x=3,y=4
+destroy A:x=3
+4

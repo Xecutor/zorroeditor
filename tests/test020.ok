@@ -1,0 +1,3 @@
+get prop.someprop
+1
+set prop.someprop=hello

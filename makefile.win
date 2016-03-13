@@ -1,0 +1,8 @@
+CXXFLAGS:=-Iinclude -std=c++11
+
+DST:=c:\soft\mingw
+
+install: all
+	@echo Installing
+	@copy include\kst\*.hpp $(DST)\include\kst
+	@copy lib\libkst.a  $(DST)\lib

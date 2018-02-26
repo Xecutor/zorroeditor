@@ -1892,10 +1892,10 @@ inline int RegExp::innerMatch(INPUT_ITER start,INPUT_ITER str,INPUT_ITER strend,
       }
       case opWordBound:
       {
-        if((str==start && RE_ISWORD(*str))||
+        if((str==start && RE_ISWORD(*str))|| (str>start && (
            (!(RE_ISWORD(str[-1])) && RE_ISWORD(*str)) ||
            (!(RE_ISWORD(*str)) && RE_ISWORD(str[-1])) ||
-           (str==strend && RE_ISWORD(str[-1])))continue;
+           (str==strend && RE_ISWORD(str[-1])))))continue;
         break;
       }
       case opNotWordBound:
@@ -2853,10 +2853,10 @@ inline int RegExp::innerMatch(INPUT_ITER start,INPUT_ITER str,INPUT_ITER strend,
               st->savestr=str;
               st=stack.pushState();
             }
-//            if(OP.bracket.index>=0 && OP.bracket.index<matchcount)
-//            {
-//              match[OP.bracket.index].end=str-start;
-//            }
+            if(OP.bracket.index>=0 && OP.bracket.index<mi->brCount)
+            {
+              match[OP.bracket.index].end=str-start;
+            }
             break;
           }
           continue;

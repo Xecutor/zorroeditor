@@ -813,10 +813,10 @@ static void makeRange(ZorroVM* vm,OpMakeRange* op)
   {
     if(step)
     {
-      ZTHROWR(TypeException,vm,"Invalid types for range: %{}..%{}",getValueTypeName(start->vt),getValueTypeName(end->vt));
+      ZTHROWR(TypeException,vm,"Invalid types for range: %{}..%{}@%{}",getValueTypeName(start->vt),getValueTypeName(end->vt),getValueTypeName(step->vt));
     }else
     {
-      ZTHROWR(TypeException,vm,"Invalid types for range: %{}..%{}@%{}",getValueTypeName(start->vt),getValueTypeName(end->vt),getValueTypeName(step->vt));
+      ZTHROWR(TypeException,vm,"Invalid types for range: %{}..%{}",getValueTypeName(start->vt),getValueTypeName(end->vt));
     }
   }
   if(dst)

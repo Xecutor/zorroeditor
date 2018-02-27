@@ -2,6 +2,8 @@
 #include "ZBuilder.hpp"
 #include "ZVMOps.hpp"
 
+#include <wctype.h>
+
 namespace zorro{
 
 static void stringLength(ZorroVM* vm,Value* self)

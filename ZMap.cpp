@@ -16,6 +16,15 @@ uint32_t ZMap::hashFunc(const Value& key)const
     case vtInt:return (key.iValue&0xffffffff)^(key.iValue>>32);
     case vtString:
       return key.str->getHashCode();
+    case vtDelegate:
+    {
+      intptr_t v=(intptr_t)key.dlg->method;
+      v^=hashFunc(key.dlg->obj);
+      if(sizeof(intptr_t)==8)
+        return ((v>>4) ^ (v>>36))&0xffffffff;
+      else
+        return (v>>4)&0xffffffff;
+    }
     case vtSegment:
     {
       Segment& s=*key.seg;

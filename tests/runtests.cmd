@@ -4,7 +4,7 @@ exit
 
 :run
 ..\build\zorro %1 >last.txt
-diff %2.ok last.txt
+diff -w %2.ok last.txt
 if not errorlevel 0 (
     echo %1 fail
     exit

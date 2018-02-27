@@ -1965,6 +1965,7 @@ BOP(eqClassClass,l->classInfo==r->classInfo)
 BOP(eqObjObj,l->obj==r->obj)
 BOP(eqFunFun,l->func==r->func)
 BOP(eqArrArr,l->arr==r->arr)
+BOP(eqMethMeth,l->method==r->method)
 
 BOP(neqBoolBool,l->bValue!=r->bValue)
 BOP(neqIntInt,l->iValue!=r->iValue)
@@ -2040,6 +2041,11 @@ static bool eqAnyRef(ZorroVM* vm,const Value* l,const Value* r)
   return vm->eqMatrix[l->vt][r->valueRef->value.vt](vm,l,&r->valueRef->value);
 }
 
+
+static bool eqDlgDlg(ZorroVM* vm,const Value* l,const Value* r)
+{
+  return l->dlg->method==r->dlg->method && vm->eqMatrix[l->dlg->obj.vt][r->dlg->obj.vt](vm,&l->dlg->obj,&r->dlg->obj);
+}
 
 /*static bool inAnyRef(ZorroVM* vm,Value* l,const Value* r)
 {
@@ -3083,6 +3089,24 @@ static void copySimple(ZorroVM* vm,Value* val,Value* dst)
 {
   if(!dst)return;
   ZASSIGN(vm,dst,val);
+}
+
+static void copyMap(ZorroVM* vm,Value* val,Value* dst)
+{
+  if(!dst)return;
+  Value map;
+  map.vt=vtMap;
+  map.map=val->map->copy();
+  ZASSIGN(vm,dst,&map);
+}
+
+static void copySet(ZorroVM* vm,Value* val,Value* dst)
+{
+  if(!dst)return;
+  Value set;
+  set.vt=vtSet;
+  set.set=val->set->copy();
+  ZASSIGN(vm,dst,&set);
 }
 
 static void copyArray(ZorroVM* vm,Value* val,Value* dst)
@@ -5432,6 +5456,9 @@ ZorroVM::ZorroVM():symbols(this)/*,ctx(*(new ZVMContext))*/,entry(0)
   eqMatrix[vtClosure][vtClosure]=eqCloClo;
   eqMatrix[vtCoroutine][vtCoroutine]=eqCorCor;
 
+  eqMatrix[vtDelegate][vtDelegate]=eqDlgDlg;
+  eqMatrix[vtMethod][vtMethod]=eqMethMeth;
+
 
   neqMatrix[vtBool][vtBool]=neqBoolBool;
   neqMatrix[vtInt][vtInt]=neqIntInt;
@@ -5630,6 +5657,8 @@ ZorroVM::ZorroVM():symbols(this)/*,ctx(*(new ZVMContext))*/,entry(0)
   unrefOps[vtMemberRef]=unrefMembRef;
   unrefOps[vtRegExp]=unrefRegExp;
 
+  copyOps[vtMap]=copyMap;
+  copyOps[vtSet]=copySet;
   copyOps[vtArray]=copyArray;
   copyOps[vtSegment]=copySegment;
   copyOps[vtSlice]=copySlice;

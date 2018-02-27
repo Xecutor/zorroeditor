@@ -321,9 +321,13 @@ struct ExprStatement:Statement{
   ExprStatement(Expr* argExpr):expr(argExpr)
   {
     st=stExpr;
-    pos=expr->pos;
-    if(expr->ns)pos=expr->ns->front().pos;
-    end=expr->end;
+    if (expr)
+    {
+      pos=expr->pos;
+      if (expr->ns)
+        pos=expr->ns->front().pos;
+      end=expr->end;
+    }
   }
   ~ExprStatement()
   {
@@ -469,9 +473,8 @@ struct WhileStatement:Statement{
   }
 };
 
-struct ReturnStatement:Statement{
-  Expr* expr;
-  ReturnStatement(Expr* argExpr):expr(argExpr)
+struct ReturnStatement:ExprStatement{
+  ReturnStatement(Expr* argExpr):ExprStatement(argExpr)
   {
     st=stReturn;
 //    if(expr)
@@ -482,17 +485,12 @@ struct ReturnStatement:Statement{
   }
   ~ReturnStatement()
   {
-    if(expr)delete expr;
   }
   void dump(std::string& out)
   {
     out+="return ";
     if(expr)expr->dump(out);
     out+="\n";
-  }
-  void getChildData(std::vector<Expr*>& subExpr,std::vector<StmtList*>& subStmt)
-  {
-    subExpr.push_back(expr);
   }
 };
 

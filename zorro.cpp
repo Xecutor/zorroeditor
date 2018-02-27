@@ -369,9 +369,9 @@ std::string dumpTypeInfo(TypeInfo& ti)
     }else if(ti.vt==vtArray || ti.vt==vtSet)
     {
       std::string rv=ti.vt==vtArray?"Array[":"Set[";
-      for(auto v:ti.arr)
+      for(auto& vv:ti.arr)
       {
-        rv+=dumpTypeInfo(v);
+        rv+=dumpTypeInfo(vv);
         rv+=",";
       }
       if(*rv.rbegin()==',')rv.erase(rv.length()-1);

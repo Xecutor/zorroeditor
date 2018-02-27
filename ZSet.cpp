@@ -13,6 +13,15 @@ uint32_t ZSet::hashFunc(const Value& key)const
     case vtRef:return hashFunc(key.valueRef->value);
     case vtDouble:
     case vtInt:return (key.iValue&0xffffffff)^(key.iValue>>32);
+    case vtDelegate:
+    {
+      intptr_t v=(intptr_t)key.dlg->method;
+      v^=hashFunc(key.dlg->obj);
+      if(sizeof(intptr_t)==8)
+        return ((v>>4) ^ (v>>36))&0xffffffff;
+      else
+        return (v>>4)&0xffffffff;
+    }
     case vtString:
       return key.str->getHashCode();
     default:

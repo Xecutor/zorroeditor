@@ -198,7 +198,7 @@ int GliderAppMain(int argc,char* argv[])
     engine.enableResizable();
     engine.selectResolution(1600,900,false);
     engine.setResolution();
-    engine.setDefaultFont(manager.getFont("../data/FSEX300.ttf",16));
+    engine.setDefaultFont(manager.getFont("FSEX300.ttf",16));
     uiConfig.init();
     engine.assignHandler(root);
     engine.setFpsLimit(60);

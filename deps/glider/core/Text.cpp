@@ -265,7 +265,7 @@ void Text::updateColors(const ClrVector& clrs,int from,int to)
     to=cbuf.size();
   }
   ClrVector::iterator it=vb.getCBuf().begin()+from,end=vb.getCBuf().begin()+to;
-  ClrVector::const_iterator cit=clrs.begin(),cend=vb.getCBuf().end();
+  ClrVector::const_iterator cit=clrs.begin(),cend=clrs.end();
   for(;it!=end && cit!=cend;++it,++cit)
   {
     *it=*cit;

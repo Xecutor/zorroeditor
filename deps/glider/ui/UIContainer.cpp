@@ -59,7 +59,7 @@ void UIContainer::removeObject(UIObject* obj)
   onRemoveObject(it->second);
   objLst.erase(it->second);
   idMap.erase(it);
-  if(mouseEnterStack.back().get()==obj)
+  if(!mouseEnterStack.empty() && mouseEnterStack.back().get()==obj)
   {
     mouseEnterStack.pop_back();
   }
@@ -102,11 +102,11 @@ void UIContainer::moveObjectToFront(UIObject* obj)
 
 void UIContainer::clear()
 {
+  onClear();
   objLst.clear();
   idMap.clear();
   nameMap.clear();
   mouseEnterStack.clear();
-  onClear();
 }
 
 void UIContainer::onMouseLeave(const MouseEvent& me)

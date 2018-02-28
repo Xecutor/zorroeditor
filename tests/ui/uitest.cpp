@@ -30,8 +30,8 @@ public:
   void test()
   {
     using namespace glider::ui;
-    EventCallback<void> eh=MKCALLBACK0(method);
-    eh.execute();
+    auto eh=MKCALLBACK0(method);
+    eh();
   }
 };
 
@@ -52,29 +52,25 @@ public:
 
 int cnt=0;
 
-void onClick(void* data,const glider::ui::UIEvent& e)
+void onClick(Button* b,const UIEvent& e)
 {
-  using glider::ui::Button;
-  Button* b=(Button*)data;
   char buf[32];
   sprintf(buf,"test%d",cnt++);
   b->setCaption(buf);
 }
 
-void onClick2(void* data,const glider::ui::UIEvent& e)
+void onClick2(const UIEvent& e)
 {
   glider::engine.exitApp();
 }
 
-void onClick3(void* data,const glider::ui::UIEvent& e)
+void onClick3(Window* w, const UIEvent& e)
 {
-  glider::ui::Window* w=(glider::ui::Window*)data;
   w->setVisible(!w->isVisible());
 }
 
-void addClick(void* data,const UIEvent& e)
+void addClick(Window* w,const UIEvent& e)
 {
-  glider::ui::Window* w=(glider::ui::Window*)data;
   static int cnt=0;
   ListBox* lb=w->findByName("lb").as<ListBox>();
   Label* l=new Label(FORMAT("one more %{}",cnt++));
@@ -101,7 +97,7 @@ int GliderAppMain(int argc,char* argv[])
 
   engine.assignHandler(root);
   Button* b=new Button();
-  b->setEventHandler(betOnClick,mkEventCallback(b,onClick));
+  b->setEventHandler(betOnClick,[b](const auto& event){onClick(b, event);});
   b->setName("button1");
   b->setCaption("test");
   b->setPos(Pos(100,100));
@@ -112,7 +108,7 @@ int GliderAppMain(int argc,char* argv[])
   b2->setName("button2");
   b2->setCaption("Quit");
   b2->setPos(Pos(100,100+b->getSize().y+5));
-  b2->setEventHandler(betOnClick,mkEventCallback(0,onClick2));
+  b2->setEventHandler(betOnClick,onClick2);
   root->addObject(b2);
 
   Window* w3=new Window(Pos(400,400),Pos(300,300),"scroller test");
@@ -130,7 +126,7 @@ int GliderAppMain(int argc,char* argv[])
     w3->addObject(lb);
     Button* b=new Button("Add");
     b->setPos(Pos(202,1));
-    b->setEventHandler(betOnClick,mkEventCallback(w3,addClick));
+    b->setEventHandler(betOnClick,[w3](const auto& evt){addClick(w3, evt);});
     w3->addObject(b);
   }
   //ScrollBar* sb=new ScrollBar(100);
@@ -174,7 +170,7 @@ int GliderAppMain(int argc,char* argv[])
   Button* b5=new Button();
   b5->setName("button5");
   b5->setCaption("hello5");
-  b5->setEventHandler(betOnClick,mkEventCallback(w,onClick3));
+  b5->setEventHandler(betOnClick,[w](const auto& evt){onClick3(w, evt);});
   b5->setPos(Pos(10,60));
   w2->addObject(b5);
   EditInput* ed=new EditInput;

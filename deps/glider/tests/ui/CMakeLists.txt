@@ -8,4 +8,4 @@ target_link_libraries(uitest glider-ui)
 
 add_custom_command(
   TARGET uitest POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/tests/data/FreeMono.ttf $<TARGET_FILE_DIR:uitest>)
+  COMMAND ${CMAKE_COMMAND} -E copy ${tests_data_dir}/FreeMono.ttf $<TARGET_FILE_DIR:uitest>)

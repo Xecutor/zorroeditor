@@ -5,3 +5,7 @@ if(MSVC)
   set_target_properties(uitest PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
 endif()
 target_link_libraries(uitest glider-ui)
+
+add_custom_command(
+  TARGET uitest POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/tests/data/FreeMono.ttf $<TARGET_FILE_DIR:uitest>)

@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 
+cmake_policy(SET CMP0003 NEW)
+
+if(VCPKG_ROOT)
+  include(${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+endif()
+
 add_subdirectory(deps)
 
 find_package(SDL2 REQUIRED)
@@ -8,7 +14,14 @@ find_package(GLEW)
 
 find_library(SDL2_IMAGE_LIB SDL2_image)
 find_library(SDL2_TTF_LIB SDL2_ttf)
-message("SDL2_IMAGE_LIB=${SDL2_IMAGE_LIB}")
+
+if(NOT SDL2_IMAGE_LIB)
+  message(FATAL "SDL2_image not found")
+endif()
+
+if(NOT SDL2_TTF_LIB)
+  message(FATAL "SDL2_ttf not found")
+endif()
 
 include_directories(core ui)
 

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+add_subdirectory(deps)
+
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW)
@@ -36,7 +38,6 @@ add_library(glider-ui STATIC ${UI_FILES})
 target_link_libraries(glider-ui glider-core)
 
 add_subdirectory(tests)
-add_subdirectory(kst)
 
 target_include_directories(glider-core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core>

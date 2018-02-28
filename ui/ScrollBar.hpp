@@ -21,9 +21,9 @@ public:
     if(value<0)value=0;
     if(value>total-frame)value=total-frame;
     scrollerRect.setPosition(Pos(0,(getSize().y-scrollerRect.getSize().y)*value/(total-frame)));
-    if(cb.isAssigned())
+    if(cb)
     {
-      cb.execute(UIEvent(this,0));
+      cb(UIEvent(this,0));
     }
   }
   void updatePosFromParent();

@@ -105,9 +105,9 @@ protected:
         }
       }
       updateScroll();
-      if(eventHandlers[lbetSelectionChanged].isAssigned())
+      if(eventHandlers[lbetSelectionChanged])
       {
-        eventHandlers[lbetSelectionChanged].execute(UIEvent(this,lbetSelectionChanged));
+        eventHandlers[lbetSelectionChanged](UIEvent(this,lbetSelectionChanged));
       }
     }
   }

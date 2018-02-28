@@ -44,16 +44,16 @@ void UIContainer::addObject(UIObject* obj)
 
 void UIContainer::removeObject(UIObject* obj)
 {
+  if(obj->isFocused())
+  {
+    obj->removeFocus();
+    root->setKeyboardFocus(0);
+  }
   IdMap::iterator it=idMap.find(obj->getUid());
   if(it==idMap.end())
   {
     //!!TODO!! throw exception?
     return;
-  }
-  if(obj->isFocused())
-  {
-    obj->removeFocus();
-    root->setKeyboardFocus(0);
   }
   nameMap.erase(obj->getName());
   onRemoveObject(it->second);

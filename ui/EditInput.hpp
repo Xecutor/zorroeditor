@@ -63,7 +63,7 @@ protected:
   class CursorBlinkAnimation:public UIAnimation{
   public:
     CursorBlinkAnimation():active(false){}
-    EditInput* ei;
+    EditInput* ei = nullptr;
     bool active;
     void onStart()
     {
@@ -75,7 +75,7 @@ protected:
     }
     bool update(int mcsec)
     {
-      return ei->cursorBlinkAnimation(mcsec);
+      return active && ei->cursorBlinkAnimation(mcsec);
     }
     bool deleteOnFinish()
     {

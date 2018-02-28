@@ -8,6 +8,9 @@ def f(x,y,z):
     return g(x,y,z)
   return c
 
+def xrange(x):
+    return iter(range(x))
+
 def t():
   z=f(1,2,3)
   y=0

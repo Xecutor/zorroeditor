@@ -176,7 +176,7 @@ public:
   {
     entry=argEntry;
     size=entry->data.size();
-    buf=&entry->data[0];
+    buf=size ? &entry->data[0] : nullptr;
     loc.fileRd=this;
     loc.offset=0;
     loc.line=0;

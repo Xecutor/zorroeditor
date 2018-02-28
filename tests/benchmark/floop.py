@@ -3,6 +3,10 @@ def g(a,b):
   if v>=b:
     v+=b
   return v
+
+def xrange(x):
+    return iter(range(x))
+
 def f():
   y=0.0
   n=10000000

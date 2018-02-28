@@ -4194,7 +4194,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
         si->registerLocalVar(vm->mkZString("closure-storage"));
       }
       int ccount=(int)si->currentScope->closedVars.size();
-      OpArg* idxPtr=&si->currentScope->closedVars[0];
+      OpArg* idxPtr=ccount ? &si->currentScope->closedVars[0] : nullptr;
       finArgs(fp,argOps);
       sg.release();
 

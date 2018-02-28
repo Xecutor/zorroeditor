@@ -85,13 +85,13 @@ void EditInput::onKeyDown(const KeyboardEvent& ke)
       deleteSymbol(ke.keySym==keyboard::GK_DELETE?0:-1);
     }
   }
-  if(ke.keySym==keyboard::GK_RETURN && eiCb[eiOnAccept].isAssigned())
+  if(ke.keySym==keyboard::GK_RETURN && eiCb[eiOnAccept])
   {
-    eiCb[eiOnAccept].execute(UIEvent(this,eiOnAccept));
+    eiCb[eiOnAccept](UIEvent(this,eiOnAccept));
   }
-  if(ke.keySym==keyboard::GK_ESCAPE && eiCb[eiOnCancel].isAssigned())
+  if(ke.keySym==keyboard::GK_ESCAPE && eiCb[eiOnCancel])
   {
-    eiCb[eiOnCancel].execute(UIEvent(this,eiOnCancel));
+    eiCb[eiOnCancel](UIEvent(this,eiOnCancel));
   }
   UIObject::onKeyDown(ke);
 }
@@ -115,7 +115,7 @@ void EditInput::deleteSymbol(int dir)
     value.erase(start,idx-start);
     text.setText(value.c_str(),true);
     setCurPos(curPos+dir,false);
-    if(eiCb[eiOnModify].isAssigned())eiCb[eiOnModify].execute(UIEvent(this,eiOnModify));
+    if(eiCb[eiOnModify])eiCb[eiOnModify](UIEvent(this,eiOnModify));
   }
 }
 
@@ -137,7 +137,7 @@ void EditInput::insertText(const char* txt)
 
   value.insert(idx,txt);
   text.setText(value.c_str(),true);
-  if(eiCb[eiOnModify].isAssigned())eiCb[eiOnModify].execute(UIEvent(this,eiOnModify));
+  if(eiCb[eiOnModify])eiCb[eiOnModify](UIEvent(this,eiOnModify));
 }
 
 void EditInput::setCurPos(int argCurPos,bool extendSelection)
@@ -260,7 +260,7 @@ void EditInput::setValue(const std::string& argValue)
   text.setText(argValue.c_str(),true);
   resetSelection();
   setCurPos(value.length());
-  if(eiCb[eiOnModify].isAssigned())eiCb[eiOnModify].execute(UIEvent(this,eiOnModify));
+  if(eiCb[eiOnModify])eiCb[eiOnModify](UIEvent(this,eiOnModify));
 }
 
 void EditInput::resetSelection()

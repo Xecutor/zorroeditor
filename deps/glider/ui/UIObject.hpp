@@ -49,7 +49,7 @@ struct UIEvent{
 
 typedef EventCallback<UIEvent> UICallBack;
 
-#define MKUICALLBACK(name) glider::ui::mkEventCallback<ThisClass,UIEvent,&ThisClass::name>(this)
+#define MKUICALLBACK(name) MKCALLBACK(name)
 
 class UIObject:public Drawable{
 public:

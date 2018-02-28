@@ -7,7 +7,7 @@
 namespace glider{
 namespace ui{
 
-typedef EventCallback<void> UserCallback;
+typedef EventCallback0 UserCallback;
 
 class UIRoot:public UIContainer,public EventHandler{
 public:

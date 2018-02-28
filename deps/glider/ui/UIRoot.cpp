@@ -216,7 +216,7 @@ void UIRoot::onFrameUpdate(int mcsec)
 void UIRoot::onUserEvent(void* data1,void* data2)
 {
   UserCallback* ucb=(UserCallback*)data1;
-  ucb->execute();
+  (*ucb)();
 }
 
 void UIRoot::replaceLoop(UIObject& obj)

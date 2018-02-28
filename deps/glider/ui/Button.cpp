@@ -36,7 +36,7 @@ Button::Button(const char* argCaption,const char* argName,UICallBack cb)
   {
     setName(argName);
   }
-  if(cb.isAssigned())
+  if(cb)
   {
     setEventHandler(betOnClick,cb);
   }
@@ -146,9 +146,9 @@ void Button::onMouseClick(const MouseEvent& me)
 {
   if(me.eventButton==1)
   {
-    if(btnCb[betOnClick].isAssigned())
+    if(btnCb[betOnClick])
     {
-      btnCb[betOnClick].execute(UIEvent(uietMouseClick,me));
+      btnCb[betOnClick](UIEvent(uietMouseClick,me));
     }
   }
   UIObject::onMouseClick(me);

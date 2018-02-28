@@ -1,0 +1,16 @@
+mask hello world
+h=1,m=nil,secs=nil
+3600
+h=2,m=10,secs=nil
+7800
+h=2.500000,m=nil,secs=15
+9015
+h=3,m=20,secs=30
+12030
+h=nil,m=5,secs=nil
+300
+h=nil,m=5,secs=10
+310
+h=nil,m=nil,secs=1
+1
+9

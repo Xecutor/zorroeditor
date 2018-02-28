@@ -1,0 +1,2 @@
+# zorro
+Zorro programming language.

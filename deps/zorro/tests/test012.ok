@@ -1,0 +1,27 @@
+2
+i=1
+>>inner
+    j=1 i=1
+<<inner
+    j=2 i=1
+    next
+i=2
+>>inner
+    j=1 i=2
+<<inner
+    j=2 i=2
+<<inner
+    j=3 i=2
+<<inner
+outer
+i=3
+>>inner
+    j=1 i=3
+<<inner
+    j=2 i=3
+<<inner
+    j=3 i=3
+    j=3 i=3
+<<inner
+outer
+hello

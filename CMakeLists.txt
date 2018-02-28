@@ -57,5 +57,5 @@ target_include_directories(glider-core PUBLIC
 )
 
 target_include_directories(glider-ui PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ui>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 )

@@ -6,8 +6,8 @@
  */
 
 #include "FileList.hpp"
-#include "UIRoot.hpp"
-#include "EventCallback.hpp"
+#include "ui/UIRoot.hpp"
+#include "ui/EventCallback.hpp"
 #include "Project.hpp"
 
 FileList::FileList(Project* argPrj):prj(argPrj)

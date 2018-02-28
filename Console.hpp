@@ -1,8 +1,8 @@
 #ifndef __ZE_CONSOLE_HPP__
 #define __ZE_CONSOLE_HPP__
 
-#include "Window.hpp"
-#include "ListBox.hpp"
+#include "ui/Window.hpp"
+#include "ui/ListBox.hpp"
 #include "ZorroVM.hpp"
 
 using namespace glider;

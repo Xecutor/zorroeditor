@@ -1,7 +1,7 @@
 #ifndef __ZE_PROJECT_HPP__
 #define __ZE_PROJECT_HPP__
 
-#include "UIObject.hpp"
+#include "ui/UIObject.hpp"
 #include <string>
 #include <map>
 #include "FileReader.hpp"

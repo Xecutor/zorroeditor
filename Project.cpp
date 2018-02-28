@@ -1,13 +1,13 @@
 #include "Project.hpp"
 #include <kst/File.hpp>
-#include "Window.hpp"
-#include "UIRoot.hpp"
+#include "ui/Window.hpp"
+#include "ui/UIRoot.hpp"
+#include "ui/Splitter.hpp"
 #include "Console.hpp"
 #include "ZBuilder.hpp"
 #include "ZEditor.hpp"
 #include "ZVMHelpers.hpp"
 #include "FileList.hpp"
-#include "Splitter.hpp"
 #include "ZVMOps.hpp"
 
 using namespace glider::ui;

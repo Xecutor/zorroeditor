@@ -9,7 +9,7 @@
 #define SRC_ZE_FINDPANEL_HPP_
 
 #include "ui/EditInput.hpp"
-#include "UIContainer.hpp"
+#include "ui/UIContainer.hpp"
 
 using namespace glider;
 using namespace glider::ui;

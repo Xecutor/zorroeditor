@@ -2,17 +2,17 @@
 #define __ZE_EDITOR_HPP__
 #define _DLGS_H
 
-#include "UIObject.hpp"
+#include "ui/UIObject.hpp"
+#include "ui/UIAnimation.hpp"
+#include "ui/ListBox.hpp"
 #include "Text.hpp"
 #include <vector>
 #include <string>
 #include "FileReader.hpp"
 #include "Line.hpp"
-#include "UIAnimation.hpp"
 #include "ZorroVM.hpp"
 #include <kst/Logger.hpp>
 #include "ZIndexer.hpp"
-#include "ListBox.hpp"
 #include "FindPanel.hpp"
 
 using namespace glider;

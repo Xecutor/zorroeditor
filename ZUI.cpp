@@ -2,12 +2,14 @@
 // Created by Konstantin on 11-May-15.
 //
 
-#include "ZBuilder.hpp"
-#include "Window.hpp"
-#include "Button.hpp"
-#include "EditInput.hpp"
 #include "ZUI.hpp"
-#include "UIRoot.hpp"
+
+#include "ZBuilder.hpp"
+
+#include "ui/Window.hpp"
+#include "ui/Button.hpp"
+#include "ui/EditInput.hpp"
+#include "ui/UIRoot.hpp"
 
 using namespace zorro;
 using namespace glider;

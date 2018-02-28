@@ -9,9 +9,9 @@
 #define __ZE_FILELIST_HPP__
 
 
-#include "ListBox.hpp"
-#include "EditInput.hpp"
-#include "Label.hpp"
+#include "ui/ListBox.hpp"
+#include "ui/EditInput.hpp"
+#include "ui/Label.hpp"
 
 using namespace glider;
 using namespace glider::ui;

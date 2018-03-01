@@ -15,9 +15,8 @@
 
 using namespace glider::ui;
 
-class Test{
+class Test : public glider::Managed{
 public:
-  typedef Test ThisClass;
   void method()
   {
     printf("hello\n");
@@ -35,11 +34,10 @@ public:
   }
 };
 
-class ScrollEventHandler{
+class ScrollEventHandler : public glider::Managed{
 protected:
   LabelRef lbl;
 public:
-  typedef ScrollEventHandler ThisClass;
   ScrollEventHandler(ScrollBar* scr,LabelRef argLbl):lbl(argLbl)
   {
     scr->setValueChangeHandler(MKUICALLBACK(onValueChanged));

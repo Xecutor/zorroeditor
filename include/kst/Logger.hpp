@@ -2,6 +2,7 @@
 #define __KST_LOGGER_HPP__
 
 #include <map>
+#include <string>
 #include <time.h>
 #include <kst/File.hpp>
 #include <kst/Format.hpp>

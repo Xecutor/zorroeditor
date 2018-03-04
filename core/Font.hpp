@@ -70,7 +70,7 @@ public:
     int pos=0;
     while((c=us.getNext(pos)))
     {
-      w+=getGlyph(c).adv;
+      w+=(int)getGlyph(c).adv;
     }
     return w;
   }

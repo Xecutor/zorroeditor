@@ -1,10 +1,10 @@
-#ifndef __GLIDER_UTILITY_HPP__
-#define __GLIDER_UTILITY_HPP__
+#pragma once
 
 #include <vector>
 #include <kst/Format.hpp>
 #include <math.h>
-#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
 
 namespace glider{
 
@@ -17,7 +17,7 @@ struct Pos{
   {
   }
   template <class T>
-  Pos(const T& argOther):x(argOther.x),y(argOther.y){}
+  Pos(const T& argOther):x((float)argOther.x),y((float)argOther.y){}
   bool isZero()const
   {
     return x==0.0f && y==0.0f;
@@ -120,13 +120,13 @@ struct Pos{
   void selectTex();
   Pos& round()
   {
-    x=(int)x;
-    y=(int)y;
+    x=roundf(x);
+    y=roundf(y);
     return *this;
   }
   float sum()const
   {
-    return fabs(x)+fabs(y);
+    return fabsf(x)+fabsf(y);
   }
 };
 
@@ -150,6 +150,11 @@ struct Posi{
   bool operator==(const U& other)const
   {
     return x==other.x && y==other.y;
+  }
+  template <class U>
+  bool operator!=(const U& other)const
+  {
+    return x!=other.x || y!=other.y;
   }
   friend Posi operator+(const Posi& lhs,const Posi& rhs)
   {
@@ -257,6 +262,10 @@ struct Recti{
   {
     return argPos.x>=pos.x && argPos.y>=pos.y && argPos.x<pos.x+size.x && argPos.y<pos.y+size.y;
   }
+  bool onBorder(const Posi<T>& argPos)const
+  {
+    return argPos.x==pos.x || argPos.y==pos.y || argPos.x==pos.x+size.x-1 || argPos.y==pos.y+size.y-1;
+  }
   Posi<T> tl()const
   {
     return pos;
@@ -279,6 +288,58 @@ struct Recti{
     v.push_back(tr());
     v.push_back(br());
     v.push_back(bl());
+  }
+  struct Iterator{
+    Posi<T> pos;
+    Posi<T> end;
+    int startx;
+    Iterator(Posi<T> argPos, Posi<T> argSize)
+    {
+      pos=argPos;
+      startx=pos.x;
+      end=pos+argSize;
+    }
+    Posi<T> operator*()const
+    {
+      return pos;
+    }
+    Iterator& operator++()
+    {
+      ++pos.x;
+      if(pos.x>=end.x) {
+        ++pos.y;
+        pos.x=startx;
+      }
+      return *this;
+    }
+    Iterator operator++(int)
+    {
+      Iterator rv = *this;
+      ++pos.x;
+      if(pos.x>=end.x) {
+        ++pos.y;
+        pos.x=startx;
+      }
+      return rv;
+    }
+    bool operator==(const Iterator& argOther)const
+    {
+      return pos==argOther.pos;
+    }
+    bool operator!=(const Iterator& argOther)const
+    {
+      return pos!=argOther.pos;
+    }
+  };
+  Iterator begin()const
+  {
+    return {pos, size};
+  }
+  Iterator end()const
+  {
+    Posi<T> p=pos;
+    p.y+=size.y;
+    return {p,{0,0}};
   }
 };
 
@@ -321,15 +382,15 @@ struct Color{
   }
   Color(unsigned int clr,bool useAlfa=false)
   {
-    a=useAlfa?((clr>>24)&0xff)/255.0:1.0;
-    r=((clr&0xff0000)>>16)/255.0;
-    g=((clr&0x00ff00)>>8)/255.0;
-    b=((clr&0x0000ff))/255.0;
+    a=useAlfa?((clr>>24)&0xff)/255.0f:1.0f;
+    r=((clr&0xff0000)>>16)/255.0f;
+    g=((clr&0x00ff00)>>8)/255.0f;
+    b=((clr&0x0000ff))/255.0f;
   }
 
   uint32_t packTo32()const
   {
-    uint32_t rv=a*255;
+    uint32_t rv=(uint32_t)(a*255);
     rv<<=8;
     rv|=(uint32_t)(r*255);
     rv<<=8;
@@ -388,6 +449,102 @@ struct Color{
     return *this;
   }
 
+  void toHSL(float& h, float& s, float& l)
+  {
+    float mn, mx;
+    mn = r < g ? r : g;
+    mn = mn  < b ? mn  : b;
+    mx = r > g ? r : g;
+    mx = mx  > b ? mx  : b;
+
+    l = mx;
+    float delta = mx - mn;
+    if (delta < 0.00001f)
+    {
+        s = 0.0f;
+        h = 0.0f; // undefined, maybe nan?
+        return;
+    }
+    if( mx > 0.0f ) {
+        s = (delta / mx);
+    } else {
+        s = 0.0f;
+        h = 0.0f;
+        return;
+    }
+    if( r >= mx )
+        h = ( g - b ) / delta;
+    else
+    if( g >= mx )
+        h = 2.0f + ( b - r ) / delta;
+    else
+        h = 4.0f + ( r - g ) / delta;
+
+    h *= 60.0f;
+
+    if( h < 0.0f ) {
+        h += 360.0f;
+    }
+  }
+  
+  void fromHSL(float h, float s, float l)
+  {
+    float hh, p, q, t, ff;
+    long  i;
+
+    if(s <= 0.0f) {
+        r = l;
+        g = l;
+        b = l;
+        return;
+    }
+    hh = h;
+    if(hh >= 360.0f) {
+      hh = fmodf(hh, 360.0f);
+    }
+    hh /= 60.0f;
+    i = (long)hh;
+    ff = hh - i;
+    p = l * (1.0f - s);
+    q = l * (1.0f - (s * ff));
+    t = l * (1.0f - (s * (1.0f - ff)));
+
+    switch(i) {
+    case 0:
+        r = l;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = l;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = l;
+        b = t;
+        break;
+
+    case 3:
+        r = p;
+        g = q;
+        b = l;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = l;
+        break;
+    case 5:
+    default:
+        r = l;
+        g = p;
+        b = q;
+        break;
+    }
+  }
+
   Color& clamp()
   {
     if(r>1.0f)r=1.0f;
@@ -419,10 +576,8 @@ typedef unsigned int uint;
 inline void customformat(kst::FormatBuffer& buf,const Pos& pos,int w,int p)
 {
   char charBuf[128];
-  int len=sprintf(charBuf,"%f,%f",pos.x,pos.y);
+  int len=snprintf(charBuf, sizeof(charBuf), "%f,%f",pos.x,pos.y);
   buf.Append(charBuf,len);
 }
 
 }
-
-#endif

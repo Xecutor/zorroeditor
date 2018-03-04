@@ -1,7 +1,7 @@
 /*
  * Splitter.cpp
  *
- *  Created on: 11 ñåíò. 2016 ã.
+ *  Created on: 11 Ã±Ã¥Ã­Ã². 2016 Ã£.
  *      Author: konst
  */
 
@@ -17,8 +17,8 @@ Splitter::Splitter(SplitterOrientation argOrientation, int argPosition):
 {
   sRect=new SplitterRect();
   sRect->rect.setColor(uiConfig.getColor("splitterColor"));
-  splitterWidth=uiConfig.getConst("splitterWidth");
-  minFirstWidth=uiConfig.getConst("splitterMinWidth");
+  splitterWidth=(int)uiConfig.getConst("splitterWidth");
+  minFirstWidth=(int)uiConfig.getConst("splitterMinWidth");
   minSecondWidth=minFirstWidth;
   addObject(sRect.get());
   setPosition(argPosition);
@@ -38,13 +38,13 @@ void Splitter::setPosition(int argPosition)
   {
     if(position>getSize().x-minSecondWidth-splitterWidth)
     {
-      position=getSize().x-minSecondWidth-splitterWidth;
+      position=(int)getSize().x-minSecondWidth-splitterWidth;
     }
   }else
   {
     if(position>getSize().y-minSecondWidth-splitterWidth)
     {
-      position=getSize().y-minSecondWidth-splitterWidth;
+      position=(int)getSize().y-minSecondWidth-splitterWidth;
     }
   }
   Rectangle& r=sRect->rect;
@@ -168,13 +168,13 @@ void Splitter::recalcPosition()
     {
       if(oldSize.y)
       {
-        newPosition=position*size.y/oldSize.y;
+        newPosition=(int)(position*size.y/oldSize.y);
       }
     }else
     {
       if(oldSize.x)
       {
-        newPosition=position*size.x/oldSize.x;
+        newPosition=(int)(position*size.x/oldSize.x);
       }
     }
   }
@@ -182,10 +182,10 @@ void Splitter::recalcPosition()
   {
     if(orientation==soHorizontal)
     {
-      newPosition=size.y-(oldSize.y-position);
+      newPosition=(int)(size.y-(oldSize.y-position));
     }else
     {
-      newPosition=size.x-(oldSize.x-position);
+      newPosition=(int)(size.x-(oldSize.x-position));
     }
   }
   setPosition(newPosition);

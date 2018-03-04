@@ -127,7 +127,7 @@ void GLState::enableScissors(const Rect& rect,bool texMode)
   {
     y=engine.getHeight()-y-h;
   }
-  GLCHK(glScissor(x,y,w,h));
+  GLCHK(glScissor((GLint)x,(GLint)y,(GLsizei)w,(GLsizei)h));
 }
 
 
@@ -137,7 +137,7 @@ void GLState::disableScissors()
   if(!scissorsStack.empty())
   {
     Rect& rect=scissorsStack.back();
-    glScissor(rect.pos.x,engine.getHeight()-rect.pos.y-rect.size.y,rect.size.x,rect.size.y);
+    glScissor((GLint)rect.pos.x,(GLint)(engine.getHeight()-rect.pos.y-rect.size.y),(GLsizei)rect.size.x,(GLsizei)rect.size.y);
   }else
   {
     glDisable(GL_SCISSOR_TEST);

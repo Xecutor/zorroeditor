@@ -117,7 +117,7 @@ Layout::Area::Area(const char* code):ItemBase(litArea)
 
 void Layout::Area::calcSize()
 {
-  r.size=Pos(hsp,vsp);
+  r.size=Pos((float)hsp,(float)vsp);
   for(ItemVector::iterator it=items.begin(),end=items.end();it!=end;++it)
   {
     (*it)->calcSize();
@@ -154,8 +154,8 @@ void Layout::Area::update(const Pos& argPos,const Pos& argSize)
   int la=lpm==lpmFromLeftToRight?(int)hla:(int)vla;
   int ola=lpm==lpmFromLeftToRight?(int)vla:(int)hla;
 
-  float mnsz=sp;
-  float evenMx=0;
+  float mnsz=(float)sp;
+  float evenMx=0.0f;
   {
     int idx=0;
     for(ItemVector::iterator it=items.begin(),end=items.end();it!=end;++it,++idx)
@@ -353,12 +353,12 @@ void Layout::Grid::calcSize()
       Pos sz=cell(x,y)->getSize();
       if(sz.x>colWidths[x])
       {
-        colWidths[x]=sz.x;
-        colInfo[x].width=sz.x;
+        colWidths[x]=(int)sz.x;
+        colInfo[x].width=(int)sz.x;
       }
       if(sz.y>rowHeights[y])
       {
-        rowHeights[y]=sz.y;
+        rowHeights[y]=(int)sz.y;
       }
     }
   }
@@ -395,12 +395,12 @@ void Layout::Grid::update(const Pos& argPos,const Pos& argSize)
       Pos sz=ir->getSize();
       if(sz.x>colWidths[x])
       {
-        colWidths[x]=sz.x;
-        colInfo[x].width=sz.x;
+        colWidths[x]=(int)sz.x;
+        colInfo[x].width=(int)sz.x;
       }
       if(sz.y>rowHeights[y])
       {
-        rowHeights[y]=sz.y;
+        rowHeights[y]=(int)sz.y;
       }
     }
   }

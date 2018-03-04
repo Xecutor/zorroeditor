@@ -170,7 +170,7 @@ void Engine::beginFrame()
 void Engine::endFrame()
 {
 //  glFlush();
-  glFinish();
+  //glFinish();
   SDL_GL_SwapWindow(screen);
 }
 
@@ -342,7 +342,7 @@ void Engine::loop(Drawable* obj)
     {
       frameTimer.Finish();
       pt.Start();
-      handler->onFrameUpdate(frameTimer.GetMcs());
+      handler->onFrameUpdate((int)frameTimer.GetMcs());
       pt.Finish();
       LOGDEBUG(log,"opTime=%{} mcs",pt.GetMcs());
       frameTimer.Start();
@@ -360,7 +360,7 @@ void Engine::loop(Drawable* obj)
       {
         int64_t toSleep=delay-opTime-overDelay;
         t.Start();
-        SDL_Delay(toSleep/1000);
+        SDL_Delay((Uint32)(toSleep/1000));
         t.Finish();
         overDelay=t.GetMcs()-toSleep;
       }else

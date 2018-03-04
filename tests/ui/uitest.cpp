@@ -151,7 +151,7 @@ int GliderAppMain(int argc,char* argv[])
   w->addObject(lbl);
 
   l->update(Pos(0,0),w->getSize());
-  w->setSize(l->getSize()+Pos(0,w->getTitleHeight()));
+  w->setSize(l->getSize()+Pos(0.0f,(float)w->getTitleHeight()));
   w->setLayout(l);
   w->setResizable(false);
 

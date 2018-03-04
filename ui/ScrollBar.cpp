@@ -30,7 +30,7 @@ void ScrollBar::onMouseButtonDown(const MouseEvent& evt)
 {
   static kst::Logger* log=kst::Logger::getLogger("sb.mousedown");
   root->lockMouse(this);
-  Pos mpos=Pos(evt.x,evt.y)-getAbsPos();
+  Pos mpos=Pos((float)evt.x,(float)evt.y)-getAbsPos();
   LOGDEBUG(log,"mpos=%{},pos=%{},size=%{}",mpos,scrollerRect.getPosition(),scrollerRect.getSize());
 
   if(scrollerRect.getRect().isInside(mpos))

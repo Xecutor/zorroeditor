@@ -84,18 +84,18 @@ void ListBox::onAddObject()
       th=h;
     }
     if(!(*it)->isVisible())continue;
-    h+=(*it)->getSize().y;
+    h+=(int)(*it)->getSize().y;
   }
   if(h>size.y)
   {
     sb->setVisible(true);
   }
-  totalHeight=h;
+  totalHeight=(float)h;
 //  printf("h=%d,size.y=%f,drawScroll=%s\n",h,size.y,drawScrollBar?"true":"false");
   if(sb->isVisible())
   {
     sb->setTotal(totalHeight);
-    /*if(sb->getValue()==0)*/sb->setValue(th);
+    /*if(sb->getValue()==0)*/sb->setValue((float)th);
 //    printFmt("sb->pos=%{}, sb->size=%{} sb->total=%d\n",sb->getPos(),sb->getSize(),(int)sb->getTotal());
   }
 }
@@ -182,7 +182,7 @@ void ListBox::onKeyDown(const KeyboardEvent& key)
         --topItem;
       }
       setSelItem(dec(selItem));
-      int h=calcHeight(objLst.begin(),selItem)-calcHeight(objLst.begin(),topItem);
+      int h=(int)(calcHeight(objLst.begin(),selItem)-calcHeight(objLst.begin(),topItem));
       if(h<0)
       {
         topItem=selItem;
@@ -214,7 +214,7 @@ void ListBox::onKeyDown(const KeyboardEvent& key)
       {
         setSelItem(inc(selItem));
 
-        int h=calcHeight(objLst.begin(),selItem)-calcHeight(objLst.begin(),topItem);
+        int h=(int)(calcHeight(objLst.begin(),selItem)-calcHeight(objLst.begin(),topItem));
         if(h<0)
         {
           topItem=selItem;
@@ -233,7 +233,7 @@ void ListBox::onKeyDown(const KeyboardEvent& key)
       int h=0;
       while(topItem!=objLst.begin() && h<size.y)
       {
-        h+=(*topItem)->getSize().y;
+        h+=(int)(*topItem)->getSize().y;
         --topItem;
       }
       updateScroll();
@@ -245,7 +245,7 @@ void ListBox::onKeyDown(const KeyboardEvent& key)
       int h=0;
       while(calcHeight(topItem,objLst.end())>size.y && h<size.y)
       {
-        h+=(*topItem)->getSize().y;
+        h+=(int)(*topItem)->getSize().y;
         ++topItem;
       }
       updateScroll();
@@ -292,7 +292,7 @@ void ListBox::scrollToEnd()
     int h=0;
     while(h+(*topItem)->getSize().y<size.y)
     {
-      h+=(*topItem)->getSize().y;
+      h+=(int)(*topItem)->getSize().y;
       --topItem;
     }
     ++topItem;

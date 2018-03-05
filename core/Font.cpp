@@ -171,7 +171,12 @@ bool Font::prepareGlyph(ushort c)
         Color& c=m[y0][x0];
         if((clr&0xff000000u)==0 && c.a!=0)
         {
-          clr=(uint32_t)(255*(c.r+c.g+c.b)/3);
+          //clr=(uint32_t)(255*(c.r+c.g+c.b)/3);
+          //if(clr>255)
+          //{
+//            clr=255;
+//          }
+          clr=128;
           clr<<=24;
           clr|=0xffffff;
         }else

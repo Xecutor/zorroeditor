@@ -545,6 +545,30 @@ struct Color{
     }
   }
 
+  void changeLightness(float mul)
+  {
+    float h,s,l;
+    toHSL(h,s,l);
+    l*=mul;
+    if(l>1.0f)
+    {
+      l=1.0f;
+    }
+    fromHSL(h,s,l);
+  }
+
+  void changeSaturation(float mul)
+  {
+    float h,s,l;
+    toHSL(h,s,l);
+    s*=mul;
+    if(s>=1.0f)
+    {
+      s=1.0f;
+    }
+    fromHSL(h,s,l);
+  }
+
   Color& clamp()
   {
     if(r>1.0f)r=1.0f;

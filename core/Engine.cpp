@@ -200,10 +200,10 @@ void Engine::loop(Drawable* obj)
     pt.Start();
     if(limitFps && targetFps==0)
     {
-      haveEvent=SDL_WaitEvent(&event);
+      haveEvent=SDL_WaitEvent(&event)!=0;
     }else
     {
-      haveEvent=SDL_PollEvent(&event);
+      haveEvent=SDL_PollEvent(&event)!=0;
     }
     pt.Finish();
     LOGDEBUG(log,"poll %{} mcs",pt.GetMcs());
@@ -332,10 +332,10 @@ void Engine::loop(Drawable* obj)
       }
       if(limitFps && targetFps==0)
       {
-        haveEvent=SDL_WaitEvent(&event);
+        haveEvent=SDL_WaitEvent(&event)!=0;
       }else
       {
-        haveEvent=SDL_PollEvent(&event);
+        haveEvent=SDL_PollEvent(&event)!=0;
       }
     }
     if(handler)

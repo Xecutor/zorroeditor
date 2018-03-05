@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 
 cmake_policy(SET CMP0003 NEW)
 
+if(NOT VCPKG_ROOT AND DEFINED ENV{VCPKG_ROOT})
+  set(VCPKG_ROOT $ENV{VCPKG_ROOT})
+endif()
+
 if(VCPKG_ROOT)
   include(${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 endif()
@@ -10,7 +14,7 @@ add_subdirectory(deps)
 
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(GLEW)
+find_package(GLEW REQUIRED)
 
 find_library(SDL2_IMAGE_LIB SDL2_image)
 find_library(SDL2_TTF_LIB SDL2_ttf)

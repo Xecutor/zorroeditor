@@ -113,6 +113,7 @@ bool Font::prepareGlyph(ushort c)
   }
   SDL_Color clr={255,255,255,255};
   SDL_Surface* tmp=TTF_RenderGlyph_Blended(font,c,clr);
+  //SDL_FreeSurface(tmp);
   if(curX+tmp->w>texSize)
   {
     curX=0;
@@ -165,7 +166,7 @@ bool Font::prepareGlyph(ushort c)
       {
         int x=curX+x0;
         int y=curY+y0;
-        m[y0][x0]/=8;
+        m[y0][x0]/=8.0f;
         uint32_t& clr=pix[img->w*y+x];
         Color& c=m[y0][x0];
         if((clr&0xff000000u)==0 && c.a!=0)
@@ -218,7 +219,7 @@ bool Font::prepareGlyph(ushort c)
     nextY=curY+tmp->h+(flags&ffGlow?2:0);
   }
   gi.init=true;
-  //SDL_FreeSurface(tmp);
+  SDL_FreeSurface(tmp);
   return true;
 }
 

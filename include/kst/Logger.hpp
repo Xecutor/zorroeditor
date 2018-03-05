@@ -56,7 +56,13 @@ public:
   {
     if(level<logLevel)return;
     time_t t=time(NULL);
+#ifdef _MSC_VER
+    tm ltime;
+    tm* lt=&ltime;
+    localtime_s(&ltime, &t);
+#else
     tm* lt=localtime(&t);
+#endif
     FormatBuffer buf2;
     format((buf2.getArgList(),"%{}:%{:02}:%{:02}:%{:02} %{:10,10}:",llprefix(level),lt->tm_hour,lt->tm_min,lt->tm_sec,catName));
     f.Write(buf2.Str(),buf2.Length());

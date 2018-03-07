@@ -166,11 +166,11 @@ struct Posi{
   }
   Posi xOnly()
   {
-    return Posi(x,0.0f);
+    return Posi(x,0);
   }
   Posi yOnly()
   {
-    return Posi(0.0f,y);
+    return Posi(0,y);
   }
   friend Posi operator*(const Posi& pos,T val)
   {
@@ -178,7 +178,7 @@ struct Posi{
   }
   friend Posi operator/(const Posi& pos,T val)
   {
-    return Pos(pos.x/val,pos.y/val);
+    return Posi(pos.x/val,pos.y/val);
   }
   bool operator<(const Posi& pos)const
   {

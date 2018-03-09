@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <type_traits>
 
 namespace glider{
 
@@ -156,6 +157,24 @@ struct Posi{
   {
     return x!=other.x || y!=other.y;
   }
+  Posi& operator+=(const Posi& rhs)
+  {
+    x+=rhs.x;
+    y+=rhs.y;
+    return *this;
+  }
+  Posi& operator-=(const Posi& rhs)
+  {
+    x-=rhs.x;
+    y-=rhs.y;
+    return *this;
+  }
+  Posi& operator*=(T val)
+  {
+    x*=val;
+    y*=val;
+    return *this;
+  }
   friend Posi operator+(const Posi& lhs,const Posi& rhs)
   {
     return Posi(lhs.x+rhs.x,lhs.y+rhs.y);
@@ -171,6 +190,18 @@ struct Posi{
   Posi yOnly()
   {
     return Posi(0,y);
+  }
+  void rotCW()
+  {
+    T t = y;
+    y = x;
+    x = -t;
+  }
+  void rotCCW()
+  {
+    T t = y;
+    y = -x;
+    x = t;
   }
   friend Posi operator*(const Posi& pos,T val)
   {
@@ -282,6 +313,22 @@ struct Recti{
   {
     return pos+size;
   }
+  Posi<T> tle()const
+  {
+    return pos;
+  }
+  Posi<T> tre()const
+  {
+    return Posi<T>(pos.x+size.x-1,pos.y);
+  }
+  Posi<T> ble()const
+  {
+    return Posi<T>(pos.x,pos.y+size.y-1);
+  }
+  Posi<T> bre()const
+  {
+    return pos+size-Posi<T>(1,1);
+  }
   void pushQuad(std::vector<Posi<T> >& v)
   {
     v.push_back(tl());
@@ -342,6 +389,88 @@ struct Recti{
     return {p,{0,0}};
   }
 };
+
+template <class T>
+struct Linei{
+  Posi<T> startPos,endPos;
+  Linei(Posi<T> argStart, Posi<T> argEnd):startPos(argStart), endPos(argEnd){}
+
+  struct Iterator{
+    Posi<T> pos, end;
+    typename std::make_signed<T>::type dx,dy,sx,sy,err,e2;
+    bool endReached = false;
+    Iterator(Posi<T> argStart, Posi<T> argEnd):pos(argStart), end(argEnd)
+    {
+      dx =  end.x - pos.x;
+      if(dx<0)
+      {
+        dx=-dx;
+      }
+      sx = pos.x < end.x ? 1 : -1;
+      dy = end.y - pos.y;
+      if(dy>0)
+      {
+        dy=-dy;
+      }
+      sy = pos.y < end.y ? 1 : -1;
+      err = dx + dy, e2; /* error value e_xy */
+      endReached=dx==0 && dy==0;
+    }
+    void step()
+    {
+      if(pos==end)
+      {
+        endReached=true;
+        return;
+      }
+
+      e2 = 2 * err;
+      if (e2 >= dy)
+      {
+        err += dy;
+        pos.x += sx;
+      }
+      if (e2 <= dx)
+      {
+        err += dx;
+        pos.y += sy;
+      }
+    }
+    Posi<T> operator*()const
+    {
+      return pos;
+    }
+    Iterator& operator++()
+    {
+      step();
+      return *this;
+    }
+    Iterator operator++(int)
+    {
+      Iterator rv = *this;
+      step();
+      return rv;
+    }
+    bool operator==(const Iterator& argOther)const
+    {
+      return endReached ? argOther.endReached : !argOther.endReached && pos==argOther.pos;
+    }
+    bool operator!=(const Iterator& argOther)const
+    {
+      return !(*this==argOther);
+    }
+
+  };
+  Iterator begin()const
+  {
+    return Iterator{startPos,endPos};
+  }
+  Iterator end()const
+  {
+    return Iterator{endPos, endPos};
+  }
+};
+
 
 struct Grid{
   Grid(const Pos& argSize,int argHSize,int argVSize):size(argSize),
@@ -449,7 +578,7 @@ struct Color{
     return *this;
   }
 
-  void toHSL(float& h, float& s, float& l)
+  void toHSV(float& h, float& s, float& v)
   {
     float mn, mx;
     mn = r < g ? r : g;
@@ -457,7 +586,7 @@ struct Color{
     mx = r > g ? r : g;
     mx = mx  > b ? mx  : b;
 
-    l = mx;
+    v = mx;
     float delta = mx - mn;
     if (delta < 0.00001f)
     {
@@ -487,15 +616,15 @@ struct Color{
     }
   }
   
-  void fromHSL(float h, float s, float l)
+  void fromHSV(float h, float s, float v)
   {
     float hh, p, q, t, ff;
     long  i;
 
     if(s <= 0.0f) {
-        r = l;
-        g = l;
-        b = l;
+        r = v;
+        g = v;
+        b = v;
         return;
     }
     hh = h;
@@ -505,68 +634,68 @@ struct Color{
     hh /= 60.0f;
     i = (long)hh;
     ff = hh - i;
-    p = l * (1.0f - s);
-    q = l * (1.0f - (s * ff));
-    t = l * (1.0f - (s * (1.0f - ff)));
+    p = v * (1.0f - s);
+    q = v * (1.0f - (s * ff));
+    t = v * (1.0f - (s * (1.0f - ff)));
 
     switch(i) {
     case 0:
-        r = l;
+        r = v;
         g = t;
         b = p;
         break;
     case 1:
         r = q;
-        g = l;
+        g = v;
         b = p;
         break;
     case 2:
         r = p;
-        g = l;
+        g = v;
         b = t;
         break;
 
     case 3:
         r = p;
         g = q;
-        b = l;
+        b = v;
         break;
     case 4:
         r = t;
         g = p;
-        b = l;
+        b = v;
         break;
     case 5:
     default:
-        r = l;
+        r = v;
         g = p;
         b = q;
         break;
     }
   }
 
-  void changeLightness(float mul)
+  void changeValue(float mul)
   {
-    float h,s,l;
-    toHSL(h,s,l);
-    l*=mul;
-    if(l>1.0f)
+    float h,s,v;
+    toHSV(h,s,v);
+    v*=mul;
+    if(v>1.0f)
     {
-      l=1.0f;
+      v=1.0f;
     }
-    fromHSL(h,s,l);
+    fromHSV(h,s,v);
   }
 
   void changeSaturation(float mul)
   {
-    float h,s,l;
-    toHSL(h,s,l);
+    float h,s,v;
+    toHSV(h,s,v);
     s*=mul;
     if(s>=1.0f)
     {
       s=1.0f;
     }
-    fromHSL(h,s,l);
+    fromHSV(h,s,v);
   }
 
   Color& clamp()

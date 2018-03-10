@@ -385,7 +385,10 @@ struct Recti{
   Iterator end()const
   {
     Posi<T> p=pos;
-    p.y+=size.y;
+    if(size.x>0)
+    {
+      p.y+=size.y;
+    }
     return {p,{0,0}};
   }
 };

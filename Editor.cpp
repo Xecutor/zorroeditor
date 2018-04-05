@@ -1502,7 +1502,12 @@ void Editor::addGhostText(int line,int col,const std::string& txt)
 
 void Editor::findNext(const std::string& str)
 {
-  if(!str.empty()) {
+  if(str.empty())
+  {
+    return;
+  }
+  else 
+  {
     lastFindString=str;
   }
   int findLine = this->curPos.y;

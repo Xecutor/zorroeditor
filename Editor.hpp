@@ -325,6 +325,9 @@ public:
   void findBack();
   void hideFind()
   {
+    if (!findPanel.get()) {
+      return;
+    }
     ((UIContainer*)parent)->removeObject(findPanel.get());
     findPanel->removeFocus();
     showFindPanel=false;

@@ -11,8 +11,8 @@ using EventCallback=std::function<void(ARG)>;
 
 using EventCallback0=std::function<void()>;
 
-#define MKCALLBACK(name) std::bind(&std::remove_reference<decltype(*this)>::type::name,this, std::placeholders::_1)
-#define MKCALLBACK0(name) std::bind(&std::remove_reference<decltype(*this)>::type::name,this)
+#define MKCALLBACK(name) std::bind(&std::remove_reference<decltype(*this)>::type::name,glider::ReferenceTmpl<std::remove_reference<decltype(*this)>::type>(this), std::placeholders::_1)
+#define MKCALLBACK0(name) std::bind(&std::remove_reference<decltype(*this)>::type::name,glider::ReferenceTmpl<std::remove_reference<decltype(*this)>::type>(this))
 
 }
 }

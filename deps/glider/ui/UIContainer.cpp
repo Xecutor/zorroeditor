@@ -121,7 +121,7 @@ void UIContainer::onMouseLeave(const MouseEvent& me)
 
 void UIContainer::onMouseMove(const MouseEvent& me)
 {
-  Pos mPos(me.x,me.y);
+  Pos mPos((float)me.x,(float)me.y);
   while(!mouseEnterStack.empty() && !mouseEnterStack.back()->isInside(mPos))
   {
     mouseEnterStack.back()->onMouseLeave(me);
@@ -158,7 +158,7 @@ void UIContainer::onMouseMove(const MouseEvent& me)
 
 void UIContainer::onMouseButtonDown(const MouseEvent& me)
 {
-  Pos mPos(me.x,me.y);
+  Pos mPos((float)me.x,(float)me.y);
   //printf("mouse button down:%d,%d\n",me.x,me.y);
   for(UIObjectsList::reverse_iterator it=objLst.rbegin(),end=objLst.rend();it!=end;++it)
   {
@@ -177,7 +177,7 @@ void UIContainer::onMouseButtonDown(const MouseEvent& me)
 
 void UIContainer::onMouseButtonUp(const MouseEvent& me)
 {
-  Pos mPos(me.x,me.y);
+  Pos mPos((float)me.x,(float)me.y);
   for(UIObjectsList::reverse_iterator it=objLst.rbegin(),end=objLst.rend();it!=end;++it)
   {
     if((*it)->isInside(mPos))
@@ -191,7 +191,7 @@ void UIContainer::onMouseButtonUp(const MouseEvent& me)
 
 void UIContainer::onMouseClick(const MouseEvent& me)
 {
-  Pos mPos(me.x,me.y);
+  Pos mPos((float)me.x,(float)me.y);
   for(UIObjectsList::reverse_iterator it=objLst.rbegin(),end=objLst.rend();it!=end;++it)
   {
     if((*it)->isInside(mPos))
@@ -205,7 +205,7 @@ void UIContainer::onMouseClick(const MouseEvent& me)
 
 void UIContainer::onMouseScroll(const MouseEvent& me)
 {
-  Pos mPos(me.x,me.y);
+  Pos mPos((float)me.x,(float)me.y);
   for(UIObjectsList::reverse_iterator it=objLst.rbegin(),end=objLst.rend();it!=end;++it)
   {
     if((*it)->isInside(mPos))

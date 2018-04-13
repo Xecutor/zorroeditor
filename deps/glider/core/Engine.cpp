@@ -170,7 +170,7 @@ void Engine::beginFrame()
 void Engine::endFrame()
 {
 //  glFlush();
-  glFinish();
+  //glFinish();
   SDL_GL_SwapWindow(screen);
 }
 
@@ -200,10 +200,10 @@ void Engine::loop(Drawable* obj)
     pt.Start();
     if(limitFps && targetFps==0)
     {
-      haveEvent=SDL_WaitEvent(&event);
+      haveEvent=SDL_WaitEvent(&event)!=0;
     }else
     {
-      haveEvent=SDL_PollEvent(&event);
+      haveEvent=SDL_PollEvent(&event)!=0;
     }
     pt.Finish();
     LOGDEBUG(log,"poll %{} mcs",pt.GetMcs());
@@ -332,17 +332,17 @@ void Engine::loop(Drawable* obj)
       }
       if(limitFps && targetFps==0)
       {
-        haveEvent=SDL_WaitEvent(&event);
+        haveEvent=SDL_WaitEvent(&event)!=0;
       }else
       {
-        haveEvent=SDL_PollEvent(&event);
+        haveEvent=SDL_PollEvent(&event)!=0;
       }
     }
     if(handler)
     {
       frameTimer.Finish();
       pt.Start();
-      handler->onFrameUpdate(frameTimer.GetMcs());
+      handler->onFrameUpdate((int)frameTimer.GetMcs());
       pt.Finish();
       LOGDEBUG(log,"opTime=%{} mcs",pt.GetMcs());
       frameTimer.Start();
@@ -360,7 +360,7 @@ void Engine::loop(Drawable* obj)
       {
         int64_t toSleep=delay-opTime-overDelay;
         t.Start();
-        SDL_Delay(toSleep/1000);
+        SDL_Delay((Uint32)(toSleep/1000));
         t.Finish();
         overDelay=t.GetMcs()-toSleep;
       }else

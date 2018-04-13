@@ -104,12 +104,12 @@ public:
     }
     if(argEvent.keySym==keyboard::GK_W)
     {
-      scale+=0.01;
+      scale+=0.01f;
       img->setScale(scale);
     }
     if(argEvent.keySym==keyboard::GK_S)
     {
-      scale-=0.01;
+      scale-=0.01f;
       img->setScale(scale);
     }
 
@@ -192,11 +192,11 @@ int GliderAppMain(int argc,char* argv[])
   sc.addObject(t2.get());
   sc.addObject(t.get());
 
-  glider::Rectangle* r=new glider::Rectangle(Rect(0,0,1024,768),Color(1,0.1,0.1));
+  glider::Rectangle* r=new glider::Rectangle(Rect(0.0f,0.0f,1024.0f,768.0f),Color(1.0f,0.1f,0.1f));
 
   sc.addObject(r);
 
-  Rect rr(Pos(0,0),Pos(engine.getWidth()-1,engine.getHeight()-1));
+  Rect rr(Pos(0.0f,0.0f),Pos((float)engine.getWidth()-1,(float)engine.getHeight()-1));
   Line* l1=new Line(rr.tl(),rr.tr());
   sc.addObject(l1);
   Line* l2=new Line(rr.tr(),rr.br());
@@ -215,8 +215,8 @@ int GliderAppMain(int argc,char* argv[])
   Color lclr(0.5,1.0,0.5);
   for(int i=0;i<10;i++)
   {
-    vbl->getVBuf().push_back(Pos(700.5,50.5+i*10));
-    vbl->getVBuf().push_back(Pos(750.5,50.5+i*10));
+    vbl->getVBuf().push_back(Pos(700.5f,50.5f+i*10));
+    vbl->getVBuf().push_back(Pos(750.5f,50.5f+i*10));
     vbl->getCBuf().push_back(lclr);
     vbl->getCBuf().push_back(lclr);
   }
@@ -235,8 +235,8 @@ int GliderAppMain(int argc,char* argv[])
 
   for(int i=0;i<2;i++)
   {
-    meh.txt[i]=new Text(meh.fnt1.get(),meh.s.c_str(),100);
-    meh.txt[i]->setPosition(Pos(5,200+i*meh.fnt1->getLineSkip()));
+    meh.txt[i]=new Text(meh.fnt1.get(),meh.s.c_str(),false, 100);
+    meh.txt[i]->setPosition(Pos(5.0f,200.0f+i*meh.fnt1->getLineSkip()));
     sc.addObject(meh.txt[i]);
   }
 
@@ -245,7 +245,7 @@ int GliderAppMain(int argc,char* argv[])
   //char fpsBuf[64];
 
 
-  meh.fpsTxt->setPosition(Pos(engine.getWidth()-30,0));
+  meh.fpsTxt->setPosition(Pos(engine.getWidth()-30.0f,0.0f));
 
   sc.addObject(meh.fpsTxt.get());
 
@@ -266,13 +266,13 @@ int GliderAppMain(int argc,char* argv[])
   Text* prov=new Text(meh.fnt1.get(),state.getRenderer());
   prov->setPosition(Pos(50,50));
   Text* vend=new Text(meh.fnt1.get(),state.getVendor());
-  vend->setPosition(Pos(50,50+meh.fnt1->getHeight()));
+  vend->setPosition(Pos(50.0f,50.0f+meh.fnt1->getHeight()));
   sc.addObject(prov);
   sc.addObject(vend);
 
-  Text* rus=new Text(meh.fnt1.get(),"BLAH! это тест по русски\nsdf ^rkasnd^< kfajsnd ^bfkasjnd^< ^gfkas^< dnfkasdnf kasdnkf ^359WEIRD^< aksdnjf kasjdn fkasj ndfkasjn dfkasndfka",200,true);
-  rus->setPosition(Pos(50,100));
-  glider::Rectangle* rr2=new glider::Rectangle(Rect(Pos(50,100),Pos(rus->getWidth(),rus->getHeight())),Color(0.2,0.2,0.2));
+  Text* rus=new Text(meh.fnt1.get(),"BLAH! это тест по русски\nsdf ^rkasnd^< kfajsnd ^bfkasjnd^< ^gfkas^< dnfkasdnf kasdnkf ^359WEIRD^< aksdnjf kasjdn fkasj ndfkasjn dfkasndfka",false, 200,true);
+  rus->setPosition(Pos(50.0f,100.0f));
+  glider::Rectangle* rr2=new glider::Rectangle(Rect(Pos(50.0f,100.0f),Pos((float)rus->getWidth(),(float)rus->getHeight())),Color(0.2f,0.2f,0.2f));
   sc.addObject(rr2);
   sc.addObject(rus);
 
@@ -284,7 +284,7 @@ int GliderAppMain(int argc,char* argv[])
     for(int y=0;y<10;y++)
     {
       gr.getCell(x,y).pushQuad(vb->getVBuf());
-      Color clr(0.5+0.5*x/10,0.5+0.5*y/10,0.5,1);
+      Color clr(0.5f+0.5f*x/10,0.5f+0.5f*y/10,0.5f,1.0f);
       vb->getCBuf().push_back(clr);
       vb->getCBuf().push_back(clr);
       vb->getCBuf().push_back(clr);

@@ -32,7 +32,7 @@ public:
     {
       captionShadow.setText(argCaption);
     }
-    size=Pos(caption.getWidth(),caption.getHeight());
+    size=Pos((float)caption.getWidth(),(float)caption.getHeight());
   }
   const std::string& getCaption()const
   {

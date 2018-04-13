@@ -107,7 +107,7 @@ struct AngleRange{
     else if(x<0 && y<0){q=M_PI;}
     else if(x>=0 && y<0){q=2*M_PI;}
 
-    return (atan(y/x)+q)*(SCALED_PI_2)/M_PI_2;
+    return (int)((atan(y/x)+q)*(SCALED_PI_2)/M_PI_2);
   }
   static int addNorm(int ang,int inc)
   {
@@ -166,8 +166,8 @@ public:
 
   CircularFov()
   {
-    minTransRate=0.5;
-    midTransRate=0.2;
+    minTransRate=0.5f;
+    midTransRate=0.2f;
     havePermBlock=false;
   }
 

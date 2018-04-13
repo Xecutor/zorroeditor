@@ -11,7 +11,7 @@ UIConfig uiConfig;
 
 void UIConfig::init()
 {
-  clearColor=Color(0.1,0.1,0.1,1);
+  clearColor=Color(0.1f,0.1f,0.1f,1.0f);
   UIRoot::init();
   /*const char* fntPath="../data/FSEX300.ttf";
   if(!kst::File::Exists(fntPath))
@@ -27,8 +27,8 @@ void UIConfig::init()
   labelFont=engine.getDefaultFont();//manager.getFont(fntPath,sz);
   windowTitleFont=engine.getDefaultFont();//manager.getFont(fntPath,sz);
   editLineFont=engine.getDefaultFont();//manager.getFont(fntPath,sz);
-  root->setSize(Pos(engine.getWidth(),engine.getHeight()));
-  editLineFontColor=Color(1,1,1,1);
+  root->setSize(Pos((float)engine.getWidth(),(float)engine.getHeight()));
+  editLineFontColor=Color(1.0f,1.0f,1.0f,1.0f);
 
   setConst("scrollBarWidth",10);
   setConst("scrollBarMinSize",16);
@@ -38,7 +38,7 @@ void UIConfig::init()
   setColor("splitterColor", Color::red);
 
   setColor("scrollBarBgColor",Color::gray);
-  setColor("scrollBarScrollerColor",Color(0.8,1.0,0.8));
+  setColor("scrollBarScrollerColor",Color(0.8f,1.0f,0.8f));
   setColor("listBoxBgColor",Color::gray);
   setColor("listBoxSelColor",Color::white);
 

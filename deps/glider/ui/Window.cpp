@@ -33,7 +33,7 @@ void Window::WindowClient::onObjectResize()
 Window::Window(const Pos& argPos,const Pos& argSize,const char* argTitle)
 {
   frame=new Rectangle(Rect(-Pos(1,1),argSize+Pos(1,1)),Color(1,1,1,0.5),false);
-  resizer=new Rectangle(Rect(argSize-Pos(7,7),Pos(7,7)),Color(0.7,0.7,0.7,0.7));
+  resizer=new Rectangle(Rect(argSize-Pos(7,7),Pos(7,7)),Color(0.7f,0.7f,0.7f,0.7f));
   resizable=true;
   resizing=false;
   pos=argPos;
@@ -45,12 +45,12 @@ Window::Window(const Pos& argPos,const Pos& argSize,const char* argTitle)
   titleText->setPos(Pos(3,3));
   titleText->setColor(Color(0,0,0));
   titleText->enableShadow();
-  titleText->setShadowColor(Color(0.9,0.9,0.9));
+  titleText->setShadowColor(Color(0.9f,0.9f,0.9f));
   titleText->setShadowOffset(Pos(0,1));
 
   title->addObject(titleText.get());
-  title->setSize(Pos(argSize.x,uiConfig.getWindowTitleFont()->getHeight()+6));
-  title->rect.setColor(Color(0.8,0.8,0.8));
+  title->setSize(Pos(argSize.x,(float)(uiConfig.getWindowTitleFont()->getHeight()+6)));
+  title->rect.setColor(Color(0.8f,0.8f,0.8f));
   if(argTitle)
   {
     titleText->setCaption(argTitle);
@@ -59,7 +59,7 @@ Window::Window(const Pos& argPos,const Pos& argSize,const char* argTitle)
   client->setPos(Pos(0,title->getSize().y));
   client->rect.setPosition(client->getPos());
   client->setSize(Pos(size.x,size.y-title->getSize().y));
-  client->rect.setColor(Color(0.1,0.1,0.1));
+  client->rect.setColor(Color(0.1f,0.1f,0.1f));
   UIContainer::addObject(title.get());
   UIContainer::addObject(client.get());
 }
@@ -87,7 +87,7 @@ void Window::WindowTitle::onMouseMove(const MouseEvent& me)
 {
   if(dragging)
   {
-    parent->setPos(parent->getPos()+Pos(me.xRel,me.yRel));
+    parent->setPos(parent->getPos()+Pos((float)me.xRel,(float)me.yRel));
   }else
   {
     UIContainer::onMouseMove(me);
@@ -116,7 +116,7 @@ void Window::onMouseButtonDown(const MouseEvent& me)
   }
   if(me.eventButton==1 && resizable)
   {
-    Pos mpos(me.x,me.y);
+    Pos mpos((float)me.x,(float)me.y);
     mpos-=getAbsPos();
     if(Rect(resizer->getPosition(),resizer->getSize()).isInside(mpos))
     {
@@ -144,7 +144,7 @@ void Window::onMouseMove(const MouseEvent& me)
 {
   if(resizing)
   {
-    Pos mrpos(me.xRel,me.yRel);
+    Pos mrpos((float)me.xRel,(float)me.yRel);
     setSize(size+mrpos);
   }else
   {
@@ -168,8 +168,8 @@ void Window::draw()
 void Window::onObjectResize()
 {
   if(size.x<64)size.x=64;
-  if(size.y<getTitleHeight()+32)size.y=getTitleHeight()+32;
-  title->setSize(Pos(size.x,uiConfig.getWindowTitleFont()->getHeight()+6));
+  if((int)size.y<getTitleHeight()+32)size.y=(float)getTitleHeight()+32;
+  title->setSize(Pos(size.x,(float)uiConfig.getWindowTitleFont()->getHeight()+6));
   client->setSize(Pos(size.x,size.y-title->getSize().y));
   //frame->setPosition(pos-Pos(1,1));
   frame->setSize(size+Pos(1,1));

@@ -17,8 +17,8 @@ EditInput::EditInput(const char* argName)
   scrollAni.ei=this;
   text.assignFont(uiConfig.getEditLineFont());
   text.setPosition(Pos(3,3));
-  size=Pos(100,uiConfig.getEditLineFont()->getHeight()+6);
-  rect.setColor(Color(0.3,0.3,0.3,1));
+  size=Pos(100.0f,(float)uiConfig.getEditLineFont()->getHeight()+6);
+  rect.setColor(Color(0.3f,0.3f,0.3f,1.0f));
   rect.setSize(size);
   tabStop=true;
   cursor.setSource(Pos(text.getPosition().x,0));
@@ -26,7 +26,7 @@ EditInput::EditInput(const char* argName)
   lastCurBlink=0;
   isCurVisible=false;
   curPos=0;
-  selection.setColor(Color(0.4,0.4,0.4,1));
+  selection.setColor(Color(0.4f,0.4f,0.4f,1.0f));
   hShift=0;
   selecting=false;
   scrollTimer=0;
@@ -241,11 +241,11 @@ void EditInput::setCurPos(int argCurPos,bool extendSelection)
   }
   if(lPos.x-hShift>size.x)
   {
-    hShift=lPos.x-size.x+2;
+    hShift=(int)(lPos.x-size.x+2);
   }
   if(hShift+2>lPos.x)
   {
-    hShift=lPos.x-2;
+    hShift=(int)(lPos.x-2);
     if(hShift<0)
     {
       hShift=0;
@@ -271,7 +271,7 @@ void EditInput::resetSelection()
 int EditInput::mouseXToCurPos(int x)
 {
   int tl=text.getTextLength();
-  x=x-getAbsPos().x-text.getPosition().x+hShift;
+  x=x-(int)getAbsPos().x-(int)text.getPosition().x+hShift;
   //printf("x=%d\n",x);
   int x0=0;
   for(int i=0;i<tl;i++)
@@ -287,10 +287,10 @@ int EditInput::mouseXToCurPos(int x)
     {
       Pos pos2,sz2;
       text.getLetterExtent(i+1,pos2,sz2);
-      x1=pos2.x;
+      x1=(int)pos2.x;
     }else
     {
-      x1=pos.x+sz.x;
+      x1=(int)(pos.x+sz.x);
       if(x>x1)
       {
         return tl;
@@ -376,7 +376,7 @@ void EditInput::draw()
   ScissorsGuard sg(Rect(pos,size));
   RelOffsetGuard rog(pos);
   rect.draw();
-  RelOffsetGuard rog2(Pos(-hShift,0));
+  RelOffsetGuard rog2(Pos((float)-hShift,0.0f));
   if(selStart!=-1 && selStart!=selEnd)
   {
     selection.draw();
@@ -390,7 +390,7 @@ void EditInput::draw()
 
 void EditInput::onObjectResize()
 {
-  size.y=uiConfig.getEditLineFont()->getHeight()+6;
+  size.y=(float)(uiConfig.getEditLineFont()->getHeight()+6);
   rect.setSize(size);
 }
 

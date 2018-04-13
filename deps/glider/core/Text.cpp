@@ -118,11 +118,11 @@ void Text::prepare(bool rawText)
           case '7':
           case '8':
           case '9':
-            curClr.r=(c-'0')/9.0;
+            curClr.r=(c-'0')/9.0f;
             c=str.getNext(i);
-            curClr.g=(c-'0')/9.0;
+            curClr.g=(c-'0')/9.0f;
             c=str.getNext(i);
-            curClr.b=(c-'0')/9.0;
+            curClr.b=(c-'0')/9.0f;
             break;
         }
         continue;
@@ -168,7 +168,7 @@ void Text::prepare(bool rawText)
         {
           wasNewLine=false;
         }
-        lineWidth+=gi.adv;
+        lineWidth+=(int)gi.adv;
       }else
       {
         if(lineWidth+gi.adv>maxWidth)
@@ -197,11 +197,11 @@ void Text::prepare(bool rawText)
         {
           wasNewLine=false;
         }
-        lineWidth+=gi.adv;
+        lineWidth+=(int)gi.adv;
       }
     }
 
-    Pos sz=gi.texSize/fnt->getTexSize();
+    Pos sz=gi.texSize/(float)fnt->getTexSize();
     Rect texRect(gi.texPos,sz);
     Rect verRect(Pos(x+gi.xshift,y+gi.yshift/*+asc-gi.maxy*/),Pos(gi.texSize.x,gi.texSize.y));
     /*if(gi.maxx==gi.texSize.x && gi.minx>0)
@@ -219,10 +219,10 @@ void Text::prepare(bool rawText)
     x+=gi.adv;
     if(x>width)
     {
-      width=x;
+      width=(int)x;
     }
   }
-  height=y+fh;
+  height=(int)(y+fh);
   vb.update();
   vb.setSize(len*4);
 }

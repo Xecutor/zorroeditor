@@ -240,7 +240,7 @@ inline Value BoolValue(bool val)
 }
 
 
-Value StringValue(ZStringRef str,bool isConst=false);
+Value StringValue(const ZStringRef& str,bool isConst=false);
 Value StringValue(ZString* str,bool isConst=false);
 Value ArrayValue(ZArray* arr,bool isConst=false);
 Value RangeValue(Range* rng,bool isConst=false);

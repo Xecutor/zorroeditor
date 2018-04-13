@@ -1,10 +1,11 @@
-#ifndef __GLIDER_UTILITY_HPP__
-#define __GLIDER_UTILITY_HPP__
+#pragma once
 
 #include <vector>
 #include <kst/Format.hpp>
 #include <math.h>
-#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <type_traits>
 
 namespace glider{
 
@@ -17,7 +18,7 @@ struct Pos{
   {
   }
   template <class T>
-  Pos(const T& argOther):x(argOther.x),y(argOther.y){}
+  Pos(const T& argOther):x((float)argOther.x),y((float)argOther.y){}
   bool isZero()const
   {
     return x==0.0f && y==0.0f;
@@ -120,13 +121,13 @@ struct Pos{
   void selectTex();
   Pos& round()
   {
-    x=(int)x;
-    y=(int)y;
+    x=roundf(x);
+    y=roundf(y);
     return *this;
   }
   float sum()const
   {
-    return fabs(x)+fabs(y);
+    return fabsf(x)+fabsf(y);
   }
 };
 
@@ -151,6 +152,29 @@ struct Posi{
   {
     return x==other.x && y==other.y;
   }
+  template <class U>
+  bool operator!=(const U& other)const
+  {
+    return x!=other.x || y!=other.y;
+  }
+  Posi& operator+=(const Posi& rhs)
+  {
+    x+=rhs.x;
+    y+=rhs.y;
+    return *this;
+  }
+  Posi& operator-=(const Posi& rhs)
+  {
+    x-=rhs.x;
+    y-=rhs.y;
+    return *this;
+  }
+  Posi& operator*=(T val)
+  {
+    x*=val;
+    y*=val;
+    return *this;
+  }
   friend Posi operator+(const Posi& lhs,const Posi& rhs)
   {
     return Posi(lhs.x+rhs.x,lhs.y+rhs.y);
@@ -161,11 +185,23 @@ struct Posi{
   }
   Posi xOnly()
   {
-    return Posi(x,0.0f);
+    return Posi(x,0);
   }
   Posi yOnly()
   {
-    return Posi(0.0f,y);
+    return Posi(0,y);
+  }
+  void rotCW()
+  {
+    T t = y;
+    y = x;
+    x = -t;
+  }
+  void rotCCW()
+  {
+    T t = y;
+    y = -x;
+    x = t;
   }
   friend Posi operator*(const Posi& pos,T val)
   {
@@ -173,7 +209,7 @@ struct Posi{
   }
   friend Posi operator/(const Posi& pos,T val)
   {
-    return Pos(pos.x/val,pos.y/val);
+    return Posi(pos.x/val,pos.y/val);
   }
   bool operator<(const Posi& pos)const
   {
@@ -257,6 +293,10 @@ struct Recti{
   {
     return argPos.x>=pos.x && argPos.y>=pos.y && argPos.x<pos.x+size.x && argPos.y<pos.y+size.y;
   }
+  bool onBorder(const Posi<T>& argPos)const
+  {
+    return argPos.x==pos.x || argPos.y==pos.y || argPos.x==pos.x+size.x-1 || argPos.y==pos.y+size.y-1;
+  }
   Posi<T> tl()const
   {
     return pos;
@@ -273,6 +313,22 @@ struct Recti{
   {
     return pos+size;
   }
+  Posi<T> tle()const
+  {
+    return pos;
+  }
+  Posi<T> tre()const
+  {
+    return Posi<T>(pos.x+size.x-1,pos.y);
+  }
+  Posi<T> ble()const
+  {
+    return Posi<T>(pos.x,pos.y+size.y-1);
+  }
+  Posi<T> bre()const
+  {
+    return pos+size-Posi<T>(1,1);
+  }
   void pushQuad(std::vector<Posi<T> >& v)
   {
     v.push_back(tl());
@@ -280,7 +336,144 @@ struct Recti{
     v.push_back(br());
     v.push_back(bl());
   }
+  struct Iterator{
+    Posi<T> pos;
+    Posi<T> end;
+    int startx;
+    Iterator(Posi<T> argPos, Posi<T> argSize)
+    {
+      pos=argPos;
+      startx=pos.x;
+      end=pos+argSize;
+    }
+    Posi<T> operator*()const
+    {
+      return pos;
+    }
+    Iterator& operator++()
+    {
+      ++pos.x;
+      if(pos.x>=end.x) {
+        ++pos.y;
+        pos.x=startx;
+      }
+      return *this;
+    }
+    Iterator operator++(int)
+    {
+      Iterator rv = *this;
+      ++pos.x;
+      if(pos.x>=end.x) {
+        ++pos.y;
+        pos.x=startx;
+      }
+      return rv;
+    }
+    bool operator==(const Iterator& argOther)const
+    {
+      return pos==argOther.pos;
+    }
+    bool operator!=(const Iterator& argOther)const
+    {
+      return pos!=argOther.pos;
+    }
+  };
+  Iterator begin()const
+  {
+    return {pos, size};
+  }
+  Iterator end()const
+  {
+    Posi<T> p=pos;
+    if(size.x>0)
+    {
+      p.y+=size.y;
+    }
+    return {p,{0,0}};
+  }
 };
+
+template <class T>
+struct Linei{
+  Posi<T> startPos,endPos;
+  Linei(Posi<T> argStart, Posi<T> argEnd):startPos(argStart), endPos(argEnd){}
+
+  struct Iterator{
+    Posi<T> pos, end;
+    typename std::make_signed<T>::type dx,dy,sx,sy,err,e2;
+    bool endReached = false;
+    Iterator(Posi<T> argStart, Posi<T> argEnd):pos(argStart), end(argEnd)
+    {
+      dx =  end.x - pos.x;
+      if(dx<0)
+      {
+        dx=-dx;
+      }
+      sx = pos.x < end.x ? 1 : -1;
+      dy = end.y - pos.y;
+      if(dy>0)
+      {
+        dy=-dy;
+      }
+      sy = pos.y < end.y ? 1 : -1;
+      err = dx + dy, e2; /* error value e_xy */
+      endReached=dx==0 && dy==0;
+    }
+    void step()
+    {
+      if(pos==end)
+      {
+        endReached=true;
+        return;
+      }
+
+      e2 = 2 * err;
+      if (e2 >= dy)
+      {
+        err += dy;
+        pos.x += sx;
+      }
+      if (e2 <= dx)
+      {
+        err += dx;
+        pos.y += sy;
+      }
+    }
+    Posi<T> operator*()const
+    {
+      return pos;
+    }
+    Iterator& operator++()
+    {
+      step();
+      return *this;
+    }
+    Iterator operator++(int)
+    {
+      Iterator rv = *this;
+      step();
+      return rv;
+    }
+    bool operator==(const Iterator& argOther)const
+    {
+      return endReached ? argOther.endReached : !argOther.endReached && pos==argOther.pos;
+    }
+    bool operator!=(const Iterator& argOther)const
+    {
+      return !(*this==argOther);
+    }
+
+  };
+  Iterator begin()const
+  {
+    return Iterator{startPos,endPos};
+  }
+  Iterator end()const
+  {
+    return Iterator{endPos, endPos};
+  }
+};
+
 
 struct Grid{
   Grid(const Pos& argSize,int argHSize,int argVSize):size(argSize),
@@ -321,15 +514,15 @@ struct Color{
   }
   Color(unsigned int clr,bool useAlfa=false)
   {
-    a=useAlfa?((clr>>24)&0xff)/255.0:1.0;
-    r=((clr&0xff0000)>>16)/255.0;
-    g=((clr&0x00ff00)>>8)/255.0;
-    b=((clr&0x0000ff))/255.0;
+    a=useAlfa?((clr>>24)&0xff)/255.0f:1.0f;
+    r=((clr&0xff0000)>>16)/255.0f;
+    g=((clr&0x00ff00)>>8)/255.0f;
+    b=((clr&0x0000ff))/255.0f;
   }
 
   uint32_t packTo32()const
   {
-    uint32_t rv=a*255;
+    uint32_t rv=(uint32_t)(a*255);
     rv<<=8;
     rv|=(uint32_t)(r*255);
     rv<<=8;
@@ -388,6 +581,126 @@ struct Color{
     return *this;
   }
 
+  void toHSV(float& h, float& s, float& v)
+  {
+    float mn, mx;
+    mn = r < g ? r : g;
+    mn = mn  < b ? mn  : b;
+    mx = r > g ? r : g;
+    mx = mx  > b ? mx  : b;
+
+    v = mx;
+    float delta = mx - mn;
+    if (delta < 0.00001f)
+    {
+        s = 0.0f;
+        h = 0.0f; // undefined, maybe nan?
+        return;
+    }
+    if( mx > 0.0f ) {
+        s = (delta / mx);
+    } else {
+        s = 0.0f;
+        h = 0.0f;
+        return;
+    }
+    if( r >= mx )
+        h = ( g - b ) / delta;
+    else
+    if( g >= mx )
+        h = 2.0f + ( b - r ) / delta;
+    else
+        h = 4.0f + ( r - g ) / delta;
+
+    h *= 60.0f;
+
+    if( h < 0.0f ) {
+        h += 360.0f;
+    }
+  }
+  
+  void fromHSV(float h, float s, float v)
+  {
+    float hh, p, q, t, ff;
+    long  i;
+
+    if(s <= 0.0f) {
+        r = v;
+        g = v;
+        b = v;
+        return;
+    }
+    hh = h;
+    if(hh >= 360.0f) {
+      hh = fmodf(hh, 360.0f);
+    }
+    hh /= 60.0f;
+    i = (long)hh;
+    ff = hh - i;
+    p = v * (1.0f - s);
+    q = v * (1.0f - (s * ff));
+    t = v * (1.0f - (s * (1.0f - ff)));
+
+    switch(i) {
+    case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+
+    case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+    case 5:
+    default:
+        r = v;
+        g = p;
+        b = q;
+        break;
+    }
+  }
+
+  void changeValue(float mul)
+  {
+    float h,s,v;
+    toHSV(h,s,v);
+    v*=mul;
+    if(v>1.0f)
+    {
+      v=1.0f;
+    }
+    fromHSV(h,s,v);
+  }
+
+  void changeSaturation(float mul)
+  {
+    float h,s,v;
+    toHSV(h,s,v);
+    s*=mul;
+    if(s>=1.0f)
+    {
+      s=1.0f;
+    }
+    fromHSV(h,s,v);
+  }
+
   Color& clamp()
   {
     if(r>1.0f)r=1.0f;
@@ -419,10 +732,8 @@ typedef unsigned int uint;
 inline void customformat(kst::FormatBuffer& buf,const Pos& pos,int w,int p)
 {
   char charBuf[128];
-  int len=sprintf(charBuf,"%f,%f",pos.x,pos.y);
+  int len=snprintf(charBuf, sizeof(charBuf), "%f,%f",pos.x,pos.y);
   buf.Append(charBuf,len);
 }
 
 }
-
-#endif

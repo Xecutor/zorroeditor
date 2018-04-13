@@ -113,6 +113,7 @@ bool Font::prepareGlyph(ushort c)
   }
   SDL_Color clr={255,255,255,255};
   SDL_Surface* tmp=TTF_RenderGlyph_Blended(font,c,clr);
+  //SDL_FreeSurface(tmp);
   if(curX+tmp->w>texSize)
   {
     curX=0;
@@ -165,12 +166,17 @@ bool Font::prepareGlyph(ushort c)
       {
         int x=curX+x0;
         int y=curY+y0;
-        m[y0][x0]/=8;
+        m[y0][x0]/=8.0f;
         uint32_t& clr=pix[img->w*y+x];
         Color& c=m[y0][x0];
         if((clr&0xff000000u)==0 && c.a!=0)
         {
-          clr=255*(c.r+c.g+c.b)/3;
+          //clr=(uint32_t)(255*(c.r+c.g+c.b)/3);
+          //if(clr>255)
+          //{
+//            clr=255;
+//          }
+          clr=128;
           clr<<=24;
           clr|=0xffffff;
         }else
@@ -183,14 +189,14 @@ bool Font::prepareGlyph(ushort c)
   }
   int minx,maxx,miny,maxy,adv;
   TTF_GlyphMetrics(font,c,&minx,&maxx,&miny,&maxy,&adv);
-  gi.minx=minx;
-  gi.maxx=maxx;
-  gi.miny=miny;
-  gi.maxy=maxy;
-  gi.adv=adv;//>0?adv:tmp->w+1;
+  gi.minx=(float)minx;
+  gi.maxx=(float)maxx;
+  gi.miny=(float)miny;
+  gi.maxy=(float)maxy;
+  gi.adv=(float)adv;//>0?adv:tmp->w+1;
   gi.xshift=0;
   gi.yshift=0;
-  gi.texSize=Pos(tmp->w,tmp->h);
+  gi.texSize=Pos((float)tmp->w,(float)tmp->h);
   if(flags&ffGlow)
   {
     gi.texSize+=Pos(2,2);
@@ -208,8 +214,8 @@ bool Font::prepareGlyph(ushort c)
     }
     printf("\n");
   }*/
-  float fix=1.0/texSize;
-  gi.texPos=Pos(curX*(1.0-fix)/(texSize-1),curY*(1.0-fix)/(texSize-1));
+  float fix=1.0f/texSize;
+  gi.texPos=Pos(curX*(1.0f-fix)/(texSize-1),curY*(1.0f-fix)/(texSize-1));
   //gi.texSize=Posi<ushort>(tmp->w,tmp->h);//Pos(tmp->w,tmp->h);
   //gi.texPos=Posi<ushort>(curX,curY);//Pos(1.0f*curX/texSize,1.0f*curY/texSize);
   curX+=tmp->w+1+(flags&ffGlow?2:0);

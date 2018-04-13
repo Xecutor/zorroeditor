@@ -91,7 +91,7 @@ protected:
       selItem=newSelItem;
       if(selItem!=objLst.end())
       {
-        int h=calcHeight(objLst.begin(),selItem)-calcHeight(objLst.begin(),topItem);
+        int h=(int)(calcHeight(objLst.begin(),selItem)-calcHeight(objLst.begin(),topItem));
         if(h<0)
         {
           topItem=selItem;
@@ -99,7 +99,7 @@ protected:
         {
           while(h>=size.y)
           {
-            h-=(*topItem)->getSize().y;
+            h-=(int)(*topItem)->getSize().y;
             ++topItem;
           }
         }
@@ -182,7 +182,7 @@ protected:
         }
         if(sizes[idx]<(*it)->getSize().x)
         {
-          sizes[idx]=(*it)->getSize().x;
+          sizes[idx]=(int)(*it)->getSize().x;
         }
       }
       return true;
@@ -205,7 +205,7 @@ protected:
       int idx=0;
       for(UIObjectsList::iterator it=mci->objLst.begin(),end=mci->objLst.end();it!=end;++it,++idx)
       {
-        (*it)->setPos(Pos(positions[idx],(*it)->getPos().y));
+        (*it)->setPos(Pos((float)positions[idx],(*it)->getPos().y));
       }
       mci->setSize(Pos(mci->objLst.back()->getPos().x+mci->objLst.back()->getSize().x,mci->getSize().y));
       return true;

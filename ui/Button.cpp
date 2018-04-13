@@ -23,7 +23,7 @@ Button::Button(const char* argCaption,const char* argName,UICallBack cb)
     caption.setText(argCaption);
     w=caption.getWidth()+8;
   }
-  size=Pos(w,uiConfig.getButtonFont()->getHeight()+6);
+  size=Pos((float)w,(float)(uiConfig.getButtonFont()->getHeight()+6));
   tmpRect.setSize(size);
   capSciss.setRect(Rect(Pos(),size));
   buttonDown=false;
@@ -50,13 +50,13 @@ Button::~Button()
 void Button::setCaption(const char* argCaption)
 {
   caption.setText(argCaption);
-  captionShade.setColor(Color(0.7,0.7,0.7));
+  captionShade.setColor(Color(0.7f,0.7f,0.7f));
   captionShade.setText(argCaption);
   Pos capPos=size;
-  capPos-=Pos(caption.getWidth(),caption.getHeight());
+  capPos-=Pos((float)caption.getWidth(),(float)caption.getHeight());
   capPos/=2;
-  capPos.x=(int)capPos.x;
-  capPos.y=(int)capPos.y;
+  capPos.x=floor(capPos.x);
+  capPos.y=floor(capPos.y);
   caption.setPosition(capPos);
   captionShade.setPosition(capPos+Pos(1,1));
 }
@@ -92,7 +92,7 @@ void Button::onMouseLeave(const MouseEvent& me)
 
 void Button::onMouseMove(const MouseEvent& me)
 {
-  if(isInside(Pos(me.x,me.y)))
+  if(isInside(Pos((float)me.x,(float)me.y)))
   {
     mouseOver=true;
     if(buttonDown)
@@ -133,7 +133,7 @@ void Button::onMouseButtonUp(const MouseEvent& me)
       setNormalState();
     }
     root->unlockMouse();
-    if(isInside(Pos(me.x,me.y)))
+    if(isInside(Pos((float)me.x,(float)me.y)))
     {
       onMouseClick(me);
     }
@@ -178,19 +178,19 @@ void Button::changeClr(Color argNewClr)
 
 void Button::setHoverState()
 {
-  changeClr(Color(0.8,0.7,0.8));
+  changeClr(Color(0.8f,0.7f,0.8f));
 }
 
 void Button::setDownState()
 {
   //changeClr(Color(0.3,0.2,0.2));
-  newClr=Color(0.7,0.8,0.8);
+  newClr=Color(0.7f,0.8f,0.8f);
   updateAnimation(0);
 }
 
 void Button::setNormalState()
 {
-  changeClr(Color(0.8,0.8,0.8));
+  changeClr(Color(0.8f,0.8f,0.8f));
 }
 
 void Button::startAnimation()

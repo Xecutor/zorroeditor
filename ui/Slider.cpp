@@ -16,10 +16,10 @@ Slider::Slider(float argCurValue,float argMinValue,float argMaxValue):
     curValue(argCurValue),minValue(argMinValue),maxValue(argMaxValue),mouseDown(false)
 {
   size=Pos(200,10);
-  rect.setColor(Color(0.3,0.3,0.3,1.0));
+  rect.setColor(Color(0.3f,0.3f,0.3f,1.0f));
   rect.setSize(size);
   rect.setFill(true);
-  updateValue(getAbsPos().x+(curValue-minValue)/(maxValue-minValue)*size.x);
+  updateValue((int)(getAbsPos().x+(curValue-minValue)/(maxValue-minValue)*size.x));
 }
 
 void Slider::onMouseButtonDown(const MouseEvent& me)
@@ -48,9 +48,9 @@ void Slider::updateValue(int mx)
   curValue=(mx-apos.x)/size.x;
   if(curValue<minValue)curValue=minValue;
   if(curValue>maxValue)curValue=maxValue;
-  int x=(curValue-minValue)*size.x/(maxValue-minValue);
-  line.setSource(Pos(x,0));
-  line.setDestination(Pos(x,size.y));
+  int x=(int)((curValue-minValue)*size.x/(maxValue-minValue));
+  line.setSource(Pos((float)x,0.0f));
+  line.setDestination(Pos((float)x,size.y));
 }
 
 void Slider::draw()

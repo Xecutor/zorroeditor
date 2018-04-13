@@ -2,7 +2,9 @@
 #define __TIMER_HPP__
 
 #ifdef _WIN32
+#ifndef  WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -82,7 +84,7 @@ public:
   ~TimeThis()
   {
     t.Finish();
-    int ms=t.Get();
+    int ms=(int)t.Get();
     printf("%s:time=%dms,speed=%lf/sec\n",msg,ms,double(count*1000.0/ms));
   }
 protected:

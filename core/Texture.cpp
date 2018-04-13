@@ -122,6 +122,10 @@ void Texture::bind()const
   GLCHK(glBindTexture(GL_TEXTURE_2D,texId));
 }
 
+void Texture::unbind()const
+{
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
 void Texture::renderHere(Drawable* obj)
 {
   if(fboId==0)

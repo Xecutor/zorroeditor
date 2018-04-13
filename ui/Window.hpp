@@ -31,15 +31,15 @@ public:
   }
   int getTitleHeight()const
   {
-    return title->rect.getSize().y;
+    return (int)title->rect.getSize().y;
   }
   Pos getClientSize()const
   {
-    return size-Pos(0,getTitleHeight());
+    return size-Pos(0.0f,(float)getTitleHeight());
   }
   void setClientSize(const Pos& argSize)
   {
-    setSize(argSize+Pos(0,getTitleHeight()));
+    setSize(argSize+Pos(0.0f,(float)getTitleHeight()));
   }
   void setResizable(bool argValue);
 

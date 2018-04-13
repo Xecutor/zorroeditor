@@ -165,7 +165,7 @@ void UIRoot::onKeyboardEvent(KeyboardEvent& argEvent)
 
 void UIRoot::onResize()
 {
-  setSize(Pos(engine.getWidth(),engine.getHeight()));
+  setSize(Pos((float)engine.getWidth(),(float)engine.getHeight()));
 }
 
 void UIRoot::onQuit()

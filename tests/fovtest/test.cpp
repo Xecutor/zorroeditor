@@ -304,15 +304,15 @@ public:
       }
       if(argEvent.keySym==keyboard::GK_P)
       {
-        if(minTransRate>0)minTransRate-=0.05;
-        if(minTransRate<=0.01)minTransRate=0.01;
+        if(minTransRate>0)minTransRate-=0.05f;
+        if(minTransRate<=0.01f)minTransRate=0.01f;
         cf.setTransVisPrc(minTransRate,minTransRate/2.0f);
         updateMap();
       }
       if(argEvent.keySym==keyboard::GK_O)
       {
-        if(minTransRate<=0.05)minTransRate=0.05;
-        else if(minTransRate<1.0)minTransRate+=0.05;
+        if(minTransRate<=0.05f)minTransRate=0.05f;
+        else if(minTransRate<1.0f)minTransRate+=0.05f;
         cf.setTransVisPrc(minTransRate,minTransRate/2);
         updateMap();
       }
@@ -475,7 +475,7 @@ int GliderAppMain(int argc,char* argv[])
       "x to toggle directional fov\nlook around with mouse with directional fov\n"
       "wheel up/down to change view angle\n"
       "t to run benchmark (1000 cycles of fov)");
-  info->setPosition(Pos(W*CELL_SIZE,0));
+  info->setPosition(Pos((float)W*CELL_SIZE,0.0f));
   VxVector& v=vb->getVBuf();
   ClrVector& c=vb->getCBuf();
   for(int y=0;y<H;++y)
@@ -484,7 +484,7 @@ int GliderAppMain(int argc,char* argv[])
     {
       //glider::Rectangle* r=new glider::Rectangle(Rect(x*15,y*15,10,10),Color(1,0.1+x/20+y/20,0.1));
       //sc.addObject(r);
-      Rect(x*CELL_SIZE+1,y*CELL_SIZE+1,CELL_SIZE-2,CELL_SIZE-2).pushQuad(v);
+      Rect((float)x*CELL_SIZE+1,(float)y*CELL_SIZE+1,(float)CELL_SIZE-2,(float)CELL_SIZE-2).pushQuad(v);
       c.push4(Color::gray);
     }
   }

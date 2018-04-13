@@ -12,6 +12,7 @@ public:
   Texture();
   virtual ~Texture();
    void bind()const;
+   void unbind()const;
    void create(int argWidth,int argHeight);
    void loadSurface(SDL_Surface* img);
    int getTexWidth()const

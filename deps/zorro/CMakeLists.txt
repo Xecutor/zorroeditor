@@ -24,11 +24,6 @@ add_library(zorro STATIC
 
 target_link_libraries( zorro kst)
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  target_compile_definitions(zorro PRIVATE -DDEBUG)
-  target_compile_options(zorro PRIVATE -Wall)
-endif()
-
 if(MSVC)
   target_compile_definitions(zorro PRIVATE -D_CRT_SECURE_NO_WARNINGS)
 endif()
@@ -38,6 +33,12 @@ if(NOT ZVM_STATIC_MATRIX)
 endif()
 
 add_executable( zorro-bin zorro.cpp )
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  target_compile_definitions(zorro PRIVATE -DDEBUG)
+  target_compile_definitions(zorro-bin PRIVATE -DDEBUG)
+  target_compile_options(zorro PRIVATE -Wall)
+endif()
 
 set_target_properties(zorro-bin PROPERTIES OUTPUT_NAME zorro )
 target_link_libraries( zorro-bin zorro )

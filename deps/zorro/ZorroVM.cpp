@@ -311,11 +311,12 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
   return "";
 }
 
-Value StringValue(ZStringRef str,bool isConst)
+
+Value StringValue(const ZStringRef& str,bool isConst)
 {
   Value rv;
   rv.vt=vtString;
-  rv.str=str.get();
+  rv.str=const_cast<ZString*>(str.get());
   rv.flags=isConst?ValFlagConst:0;
   return rv;
 }

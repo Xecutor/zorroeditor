@@ -143,13 +143,13 @@ struct OpArg{
   inline std::string toStr()const
   {
     char buf[32];
-    sprintf(buf,"%s%s[%d]",getArgTypeName(at),isTemporal?"T":"",idx);
+    snprintf(buf, sizeof(buf), "%s%s[%d]",getArgTypeName(at),isTemporal?"T":"",idx);
     return buf;
   }
   static void inttostr(int val,std::string& out)
   {
     char buf[32];
-    sprintf(buf,"%d",val);
+    snprintf(buf,sizeof(buf), "%d",val);
     out+=buf;
   }
 };

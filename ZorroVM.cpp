@@ -210,10 +210,10 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
     case vtRef:return "ref:"+ValueToString(vm,v.valueRef->value);
     case vtWeakRef:return "weak:"+ValueToString(vm,v.valueRef->value);
     case vtMethod:
-      sprintf(buf,"method %p/%d",v.func->entry,v.func->index);
+      snprintf(buf, sizeof(buf), "method %p/%d",v.func->entry,v.func->index);
       return buf;
     case vtFunc:
-      sprintf(buf,"func %p/%d",v.func->entry,v.func->index);
+      snprintf(buf, sizeof(buf), "func %p/%d",v.func->entry,v.func->index);
       return buf;
     case vtKeyRef:return "key";
     case vtMemberRef:return "property";
@@ -2714,15 +2714,15 @@ static void formatInt(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,Val
     if(ff.uchex)
     {
       kst::format((buf.getArgList(),"%{X}",v->iValue));
-      //len=sprintf(buf,"%" PRIx64,v->iValue);
+      //len=snprintf(buf, sizeof(buf), "%" PRIx64,v->iValue);
     }else
     {
-      //len=sprintf(buf,"%" PRIx64,v->iValue);
+      //len=snprintf(buf, sizeof(buf), "%" PRIx64,v->iValue);
       kst::format((buf.getArgList(),"%{x}",v->iValue));
     }
   }else
   {
-    //len=sprintf(buf,"%" PRId64,v->iValue);
+    //len=snprintf(buf, sizeof(buf), "%" PRId64,v->iValue);
     kst::format((buf.getArgList(),"%{}",v->iValue));
   }
   int len=buf.Length();

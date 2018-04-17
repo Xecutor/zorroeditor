@@ -560,7 +560,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
     case etFunc:
     {
       char name[32];
-      sprintf(name,"anonymous-%p",e);
+      snprintf(name, sizeof(name), "anonymous-%p",e);
       Name nm(vm->mkZString(name),e->pos);
       SymInfo* sym=si->getSymbol(nm);
       if(sym && (sym->st==sytFunction || sym->st==sytMethod))
@@ -1061,7 +1061,7 @@ void CodeGenerator::fillNames(StmtList* sl,bool deep)
         }else
         {
           char nsName[64];
-          int l=sprintf(nsName,"anonymous-ns-%p",&ns);
+          int l=snprintf(nsName, sizeof(nsName), "anonymous-ns-%p",&ns);
           ns.name=Name(vm->mkZString(nsName,l),ns.pos);
           si->enterNamespace(ns.name);
           nsPtr=si->currentScope;
@@ -4125,7 +4125,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
     case etFunc:
     {
       char name[32];
-      sprintf(name,"anonymous-%p",expr);
+      snprintf(name, sizeof(name), "anonymous-%p",expr);
       Name nm(vm->mkZString(name),expr->pos);
       FuncDeclStatement& fds=*expr->func;
       fds.name=nm;

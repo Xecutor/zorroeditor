@@ -295,7 +295,14 @@ void Editor::draw()
         Pos xs,xe;
         if(lidx==sit->start.y)
         {
-          dl.txt.getLetterExtent(sit->start.x,ps,xs);
+          if(sit->start.x<dl.txt.getTextLength())
+          {
+            dl.txt.getLetterExtent(sit->start.x,ps,xs);
+          }else
+          {
+            dl.txt.getLetterExtent(dl.txt.getTextLength()-1,ps,xs);
+            ps.x+=xs.x;
+          }
         }else
         {
           ps=Pos(0,0);

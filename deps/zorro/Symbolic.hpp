@@ -421,7 +421,7 @@ struct ScopeSym:SymInfo{
       }
 
       char rname[32];
-      sprintf(rname,"temp-%d",rindex);
+      snprintf(rname, sizeof(rname), "temp-%d",rindex);
       ZStringRef nm(mem,mem->allocZString(rname));
       tmp=new SymInfo(Name(nm,FileLocation()),sytTemporal);
       symMap.insert(nm,tmp);
@@ -856,6 +856,10 @@ struct SymbolsInfo{
       currentClass=(ClassInfo*)ptr;
     }
     currentScope=(ScopeSym*)currentScope->getParent();
+    if(!currentScope)
+    {
+      currentScope=&global;
+    }
   }
 
   void enterBlock(Name argName)
@@ -1452,7 +1456,7 @@ struct SymbolsInfo{
     ZArray* arr=mem->allocZArray();
     arr->ref();
     char name[32];
-    sprintf(name,"array-%p",arr);
+    snprintf(name, sizeof(name), "array-%p",arr);
     ZStringRef nm=mem->mkZString(name);
     int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=ArrayValue(arr,true);
@@ -1464,7 +1468,7 @@ struct SymbolsInfo{
     ZMap* map=mem->allocZMap();
     map->ref();
     char name[32];
-    sprintf(name,"map-%p",map);
+    snprintf(name, sizeof(name), "map-%p",map);
     ZStringRef nm=mem->mkZString(name);
     int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=MapValue(map,true);
@@ -1476,7 +1480,7 @@ struct SymbolsInfo{
     ZSet* set=mem->allocZSet();
     set->ref();
     char name[32];
-    sprintf(name,"set-%p",set);
+    snprintf(name, sizeof(name), "set-%p",set);
     ZStringRef nm=mem->mkZString(name);
     int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=SetValue(set,true);
@@ -1488,7 +1492,7 @@ struct SymbolsInfo{
     RegExpVal* re=mem->allocRegExp();
     re->ref();
     char name[32];
-    sprintf(name,"regexp-%p",re);
+    snprintf(name, sizeof(name), "regexp-%p",re);
     ZStringRef nm=mem->mkZString(name);
     int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     Value val;
@@ -1504,7 +1508,7 @@ struct SymbolsInfo{
     Range* r=mem->allocRange();
     r->ref();
     char name[32];
-    sprintf(name,"range-%p",r);
+    snprintf(name, sizeof(name), "range-%p",r);
     ZStringRef nm=mem->mkZString(name);
     int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=RangeValue(r,true);

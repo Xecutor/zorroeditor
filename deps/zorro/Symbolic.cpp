@@ -138,10 +138,16 @@ SymInfo* SymbolsInfo::getSymbol(Symbol sym)
                   if(!ptr->hasClosedFuncStorage(sptr->index,idx))
                   {
                     ScopeSym* save=currentScope;
-                    currentScope=ptr;
-                    idx=registerLocalVar(mem->mkZString(FORMAT("closure-storage:%{}",sptr->index)));
-                    currentScope=save;
-                    ptr->tmpChild->closedFuncs.push_back(ScopeSym::ClosedFuncInfo(sptr->index,idx));
+                    try{
+                      currentScope=ptr;
+                      idx=registerLocalVar(mem->mkZString(FORMAT("closure-storage:%{}",sptr->index)));
+                      currentScope=save;
+                      ptr->tmpChild->closedFuncs.push_back(ScopeSym::ClosedFuncInfo(sptr->index,idx));
+                    }catch(...)
+                    {
+                      currentScope=save;
+                      throw;
+                    }
                   }
                   src.at=atLocal;
                   src.idx=idx;
@@ -505,15 +511,22 @@ void SymbolsInfo::importApi(InputBuffer& ib)
           if(fi->rvtype.vt==vtObject || fi->rvtype.vt==vtNativeObject)
           {
             ScopeSym* ss=currentScope;
-            currentScope=&global;
-            importNs(*this,ib);
-            ZStringRef nm(mem,ib.getCString());
-            SymInfo* sym=currentScope->getSymbols()->findSymbol(nm);
-            if(sym && sym->st==sytClass)
-            {
-              fi->rvtype.symRef=(ScopeSym*)sym;
+            try{
+              currentScope=&global;
+              importNs(*this,ib);
+              ZStringRef nm(mem,ib.getCString());
+              SymInfo* sym=currentScope->getSymbols()->findSymbol(nm);
+              if(sym && sym->st==sytClass)
+              {
+                fi->rvtype.symRef=(ScopeSym*)sym;
+              }
+              currentScope=ss;
             }
-            currentScope=ss;
+            catch(...)
+            {
+              currentScope=ss;
+              break;
+            }
           }
         }
       }break;

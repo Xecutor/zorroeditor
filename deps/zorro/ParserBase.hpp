@@ -940,11 +940,11 @@ public:
         char msg[256];
         if(lastFailMatch.pos.fileRd)
         {
-          sprintf(msg,"%s unexpected",Lexer::getTermName(lastFailMatch));
+          snprintf(msg, sizeof(msg), "%s unexpected",Lexer::getTermName(lastFailMatch));
           throw SyntaxErrorException(msg,lastFailMatch.pos);
         }else
         {
-          sprintf(msg,"%s unexpected",Lexer::getTermName(t));
+          snprintf(msg, sizeof(msg), "%s unexpected",Lexer::getTermName(t));
           throw SyntaxErrorException(msg,t.pos);
         }
       }
@@ -985,7 +985,7 @@ public:
             }
           }
           char msg[256];
-          sprintf(msg,"Parsing of %s failed",s.name.c_str());
+          snprintf(msg, sizeof(msg), "Parsing of %s failed",s.name.c_str());
           throw SyntaxErrorException(msg,t.pos);
         }else
         {

@@ -360,10 +360,10 @@ inline std::string FileLocation::backTrace()const
   {
     result+="???:";
     char buf[32];
-    sprintf(buf,"%u",loc.line+1);
+    snprintf(buf, sizeof(buf), "%u",loc.line+1);
     result+=buf;
     result+=':';
-    sprintf(buf,"%u",loc.col+1);
+    snprintf(buf, sizeof(buf), "%u",loc.col+1);
     result+=buf;
     return result;
   }
@@ -377,10 +377,10 @@ inline std::string FileLocation::backTrace()const
     result+=e->name;
     result+=':';
     char buf[32];
-    sprintf(buf,"%u",loc.line+1);
+    snprintf(buf, sizeof(buf), "%u",loc.line+1);
     result+=buf;
     result+=':';
-    sprintf(buf,"%u",loc.col+1);
+    snprintf(buf, sizeof(buf), "%u",loc.col+1);
     result+=buf;
     loc=loc.fileRd->getParent();
   }

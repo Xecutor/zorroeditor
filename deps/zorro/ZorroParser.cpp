@@ -321,8 +321,8 @@ ZParser::ZParser(ZMemory* argMem):mem(argMem),result(0)
 
   ADDRULE(0,("propAccDecl empty","propAccDecl: tEol-"),handleEmptyPropAcc);
   ADDRULE(2,("propAccDecl name","propAccDecl: tIdent tEq- tIdent tEol-"),handlePropAccName);
-  ADDRULE(2,("propAccDecl func","propAccDecl: tIdent tEol- stmtList tEnd- tEol-"),handlePropAccNoArg);
-  ADDRULE(3,("propAccDecl func","propAccDecl: tIdent tORBr- tIdent tCRBr- tEol- stmtList tEnd- tEol-"),handlePropAccArg);
+  ADDRULE(2,("propAccDecl func","propAccDecl: tIdent tEol- stmtList tEnd-"),handlePropAccNoArg);
+  ADDRULE(3,("propAccDecl func","propAccDecl: tIdent tORBr- tIdent tCRBr- tEol- stmtList tEnd-"),handlePropAccArg);
 
   ADDRULE(0,("propAccDeclList empty","propAccDeclList:"),handlePropAccListEmpty);
   ADDRULE(1,("propAccDeclList first","propAccDeclList: propAccDecl"),handlePropAccListFirst);

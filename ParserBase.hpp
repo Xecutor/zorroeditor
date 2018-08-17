@@ -626,7 +626,7 @@ public:
               }
               continue;
             }
-            if(s.seq[i].nt!=s.seq[i].nt)
+            if(s.seq[i].nt!=as.seq[i].nt)
             {
               DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)i);
               s.compatibleAlt=i;
@@ -683,7 +683,7 @@ public:
                     }
                     continue;
                   }
-                  if(s.seq[i].nt!=s.seq[i].nt)
+                  if(s.seq[i].nt!=as.seq[i].nt)
                   {
                     DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)i);
                     s.compatibleAlt=i;

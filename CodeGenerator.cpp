@@ -1969,7 +1969,7 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
       if(si->currentScope->st==sytGlobalScope || si->currentScope->st==sytNamespace)
       {
         ci=si->enterClass(cds.name);
-        if(!si)
+        if(!ci)
         {
           ZTHROW(CGException,cds.name.pos,"Internall error, failed to enter class %{}",cds.name);
         }
@@ -2212,7 +2212,7 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
         for(ExprList::iterator it=est.items->begin(),end=est.items->end();it!=end;++it)
         {
           Expr& ex=**it;
-          if(ex.et!=etVar && (!est.bitEnum && ex.et!=etAssign))
+          if(!(ex.et==etVar || (est.bitEnum && ex.et==etAssign)))
           {
             if(ex.et==etAssign)
             {

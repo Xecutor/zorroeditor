@@ -431,7 +431,6 @@ void SymbolsInfo::exportApi(OutputBuffer& ob)
         ob.setCString(sym->name.val.c_str());
         switch(v.vt)
         {
-          ob.setCString(sym->name.val.c_str());
           case vtInt:
           {
             ob.set64(v.iValue);
@@ -554,7 +553,7 @@ void SymbolsInfo::importApi(InputBuffer& ib)
         registerGlobalSymbol(nm,si);
         si->tinfo.ts=tsDefined;
         si->tinfo.vt=(ValueType)ib.get8();
-        if(si->tinfo.vt==vtNativeObject || si->tinfo.vt==vtNativeObject)
+        if(si->tinfo.vt==vtObject || si->tinfo.vt==vtNativeObject)
         {
           importNs(*this,ib);
           ZStringRef nm(mem,ib.getCString());

@@ -163,7 +163,7 @@ static void input(ZorroVM* vm)
     return;
   }
   int l=strlen(buf);
-  while(l>0 && (buf[l-1]==0x0a || buf[l-1]==0x0a))--l;
+  while(l>0 && (buf[l-1]==0x0a || buf[l-1]==0x0d))--l;
   buf[l]=0;
   vm->setResult(StringValue(vm->allocZString(buf,l)));
 }

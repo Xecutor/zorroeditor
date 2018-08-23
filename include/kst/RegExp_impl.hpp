@@ -904,7 +904,7 @@ inline bool RegExp::innerCompile(INPUT_ITER start,INPUT_ITER end,int options)
 
   size_t pos=1;
 
-  register PREOpCode op;//=code;
+  PREOpCode op;//=code;
 
   brackets[0]=code;
 

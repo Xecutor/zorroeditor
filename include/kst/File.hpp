@@ -239,7 +239,6 @@ public:
         Flush();
       }catch(std::exception&)
       {
-        (void)e;
         flags&=~FLG_WRBUF;
       }
       close(fd);
@@ -319,12 +318,8 @@ public:
     Check();
     if(flags&FLG_RDBUF)
     {
-<<<<<<< HEAD
       long off = bufferUsed-bufferPosition;
       lseek(fd,-off,SEEK_CUR);
-=======
-      lseek(fd,-(ssize_t)(bufferUsed-bufferPosition),SEEK_CUR);
->>>>>>> 2cac7c46a925e7b9b0b83c563625c637a1309776
       flags&=~FLG_RDBUF;
     }
 

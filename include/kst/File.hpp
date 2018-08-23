@@ -235,7 +235,7 @@ public:
     {
       try{
         Flush();
-      }catch(std::exception& e)
+      }catch(std::exception&)
       {
         flags&=~FLG_WRBUF;
       }
@@ -316,7 +316,8 @@ public:
     Check();
     if(flags&FLG_RDBUF)
     {
-      lseek(fd,-(bufferUsed-bufferPosition),SEEK_CUR);
+      long off = bufferUsed-bufferPosition;
+      lseek(fd,-off,SEEK_CUR);
       flags&=~FLG_RDBUF;
     }
 

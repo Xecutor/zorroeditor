@@ -453,7 +453,7 @@ public:
     return !m_count;
   }
 
-  void clear(bool a_freeMemPool=false)
+  void clear()
   {
     if(m_root)
     {
@@ -673,7 +673,7 @@ public:
         return iterator(&n);
       }
     }
-    return end();
+    //return end();
   }
 
   friend class iterator;

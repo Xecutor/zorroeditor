@@ -8,29 +8,31 @@ uint32_t ZSet::hashFunc(const Value& key)const
   switch(key.vt)
   {
     case vtNil:return 0xffffffff;
-    case vtBool:return key.bValue?1:0;
+    case vtBool:return key.bValue?1u:0u;
     case vtWeakRef:
     case vtRef:return hashFunc(key.valueRef->value);
     case vtDouble:
-    case vtInt:return (key.iValue&0xffffffff)^(key.iValue>>32);
+    case vtInt:return static_cast<uint32_t>((key.iValue&0xffffffff)^(key.iValue>>32));
     case vtDelegate:
     {
       intptr_t v=(intptr_t)key.dlg->method;
       v^=hashFunc(key.dlg->obj);
-      if(sizeof(intptr_t)==8)
+#if INTPTR_MAX > 0xffffffffu
         return ((v>>4) ^ (v>>36))&0xffffffff;
-      else
+#else
         return (v>>4)&0xffffffff;
+#endif
     }
     case vtString:
       return key.str->getHashCode();
     default:
     {
       intptr_t v=(intptr_t)key.arr;
-      if(sizeof(intptr_t)==8)
+#if INTPTR_MAX > 0xffffffffu
         return ((v>>4) ^ (v>>36))&0xffffffff;
-      else
+#else
         return (v>>4)&0xffffffff;
+#endif
     }
   }
 }

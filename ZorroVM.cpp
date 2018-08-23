@@ -99,7 +99,7 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
           if(end>=(int64_t)za.getCount())end=za.getCount();
           if(seg.step>0)
           {
-            for(size_t i=start;i<(size_t)end;++i)
+            for(size_t i=static_cast<size_t>(start);i<static_cast<size_t>(end);++i)
             {
               if(i!=(size_t)start)
               {
@@ -131,13 +131,14 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
           if(end>=str.getLength())end=str.getLength();
           if(seg.step>0)
           {
-            rv.assign(str.c_substr(vm,start,end-start));
+            rv.assign(str.c_substr(vm,static_cast<uint32_t>(start),static_cast<uint32_t>(end-start)));
           }else
           {
-            std::string tmp=str.c_substr(vm,start,end-start);
+            std::string tmp=str.c_substr(vm,static_cast<uint32_t>(start),static_cast<uint32_t>(end-start));
             if(!tmp.empty())
             {
-              for(int i=tmp.length()-1;i>=0;--i)
+              //i will wrap after reaching 0
+              for(size_t i=tmp.length()-1;i<tmp.length();--i)
               {
                 rv+=tmp[i];
               }
@@ -210,10 +211,10 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
     case vtRef:return "ref:"+ValueToString(vm,v.valueRef->value);
     case vtWeakRef:return "weak:"+ValueToString(vm,v.valueRef->value);
     case vtMethod:
-      snprintf(buf, sizeof(buf), "method %p/%d",v.func->entry,v.func->index);
+      snprintf(buf, sizeof(buf), "method %p/%u",v.func->entry,static_cast<unsigned int>(v.func->index));
       return buf;
     case vtFunc:
-      snprintf(buf, sizeof(buf), "func %p/%d",v.func->entry,v.func->index);
+      snprintf(buf, sizeof(buf), "func %p/%u",v.func->entry,static_cast<unsigned int>(v.func->index));
       return buf;
     case vtKeyRef:return "key";
     case vtMemberRef:return "property";
@@ -237,7 +238,7 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
           size_t rIdx;
           if(idxVal.vt==vtInt)
           {
-            rIdx=idxVal.iValue;
+            rIdx=static_cast<size_t>(idxVal.iValue);
           }else
           {
             ZTHROW0(ZorroException,"ValueToString: invalid string index value type %{} in slice",getValueTypeName(idxVal.vt));
@@ -279,7 +280,7 @@ std::string ValueToString(ZorroVM* vm,const Value& v)
           size_t rIdx;
           if(idxVal.vt==vtInt)
           {
-            rIdx=idxVal.iValue;
+            rIdx=static_cast<size_t>(idxVal.iValue);
           }else
           {
             ZTHROW0(ZorroException,"ValueToString: invalid array index value type %{} in slice",getValueTypeName(idxVal.vt));
@@ -317,7 +318,7 @@ Value StringValue(const ZStringRef& str,bool isConst)
   Value rv;
   rv.vt=vtString;
   rv.str=const_cast<ZString*>(str.get());
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -326,7 +327,7 @@ Value StringValue(ZString* str,bool isConst)
   Value rv;
   rv.vt=vtString;
   rv.str=str;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -335,7 +336,7 @@ Value ArrayValue(ZArray* arr,bool isConst)
   Value rv;
   rv.vt=vtArray;
   rv.arr=arr;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -344,7 +345,7 @@ Value RangeValue(Range* rng,bool isConst)
   Value rv;
   rv.vt=vtRange;
   rv.range=rng;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -353,7 +354,7 @@ Value MapValue(ZMap* map,bool isConst)
   Value rv;
   rv.vt=vtMap;
   rv.map=map;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -362,7 +363,7 @@ Value SetValue(ZSet* set,bool isConst)
   Value rv;
   rv.vt=vtSet;
   rv.set=set;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -372,7 +373,7 @@ Value KeyRefValue(KeyRef* kr,bool isConst)
   Value rv;
   rv.vt=vtKeyRef;
   rv.keyRef=kr;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -457,7 +458,7 @@ static void assignSegmentToAny(ZorroVM* vm,Value* l,const Value* r,Value*)
     if(seg.cont.vt==vtArray)
     {
       ZArray& za=*seg.cont.arr;
-      Value* item=&za.getItemRef(seg.segStart);
+      Value* item=&za.getItemRef(static_cast<size_t>(seg.segStart));
       ZASSIGN(vm,l,item);
     }else if(seg.cont.vt==vtObject)
     {
@@ -484,7 +485,7 @@ static void assignAnyToSegment(ZorroVM* vm,Value* l,const Value* r,Value*)
       {
         za.isSimpleContent=false;
       }
-      Value* item=&za.getItemRef(seg.segStart);
+      Value* item=&za.getItemRef(static_cast<size_t>(seg.segStart));
       ZASSIGN(vm,item,r);
     }else if(seg.cont.vt==vtObject)
     {
@@ -586,7 +587,7 @@ static void assignScalarToRefType(ZorroVM* vm,Value* l,const Value* r,Value*)
   *l=*r;
 }
 
-static void assignRefTypeToScalar(ZorroVM* vm,Value* l,const Value* r,Value*)
+static void assignRefTypeToScalar(ZorroVM* /*vm*/,Value* l,const Value* r,Value*)
 {
   *l=*r;
   l->refBase->ref();
@@ -698,7 +699,7 @@ static void mulStrInt(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   int64_t cnt=r->iValue;
   if(cnt<0)cnt=0;
   uint32_t sl=str.getDataSize();
-  size_t dataSize=sl*cnt;
+  size_t dataSize=static_cast<size_t>(sl*cnt);
   char* data=vm->allocStr(dataSize+(str.getCharSize()==1?1:0));
   if(!data)
   {
@@ -760,11 +761,12 @@ static void divStrRegExp(ZorroVM* vm,Value* l,const Value* r,Value* dst)
     while(rx.SearchEx(start,start+lastPos,end,sm))
     {
       za.pushAndRef(StringValue(str.substr(vm,lastPos,sm.br[0].start-lastPos)));
-      for(int i=1;i<sm.brCount;++i)
+      for(size_t i=1;i<sm.brCount;++i)
       {
-        za.pushAndRef(StringValue(str.substr(vm,sm.br[i].start,sm.br[i].end-sm.br[i].start)));
+        za.pushAndRef(StringValue(str.substr(vm,static_cast<uint32_t>(sm.br[i].start),
+                                             static_cast<uint32_t>(sm.br[i].end-sm.br[i].start))));
       }
-      lastPos=sm.br[0].end;
+      lastPos=static_cast<size_t>(sm.br[0].end);
     }
     za.pushAndRef(StringValue(str.substr(vm,lastPos,str.getLength()-lastPos)));
   }else
@@ -775,18 +777,19 @@ static void divStrRegExp(ZorroVM* vm,Value* l,const Value* r,Value* dst)
     while(rx.SearchEx(start,start+lastPos,end,sm))
     {
       za.pushAndRef(StringValue(str.substr(vm,lastPos,sm.br[0].start-lastPos)));
-      for(int i=1;i<sm.brCount;++i)
+      for(size_t i=1;i<sm.brCount;++i)
       {
-        za.pushAndRef(StringValue(str.substr(vm,sm.br[i].start,sm.br[i].end-sm.br[i].start)));
+        za.pushAndRef(StringValue(str.substr(vm,static_cast<uint32_t>(sm.br[i].start),
+                                             static_cast<uint32_t>(sm.br[i].end-sm.br[i].start))));
       }
-      lastPos=sm.br[0].end;
+      lastPos=static_cast<size_t>(sm.br[0].end);
     }
     za.pushAndRef(StringValue(str.substr(vm,lastPos,str.getLength()-lastPos)));
   }
   ZASSIGN(vm,dst,&v);
 }
 
-static void mulCallableArray(ZorroVM* vm,Value* l,const Value* r,Value* dst)
+static void mulCallableArray(ZorroVM* vm,Value* l,const Value* r,Value* /*dst*/)
 {
   ZArray& za=*r->arr;
   size_t sz=za.getCount();
@@ -830,7 +833,8 @@ static void saddStrSegment(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   {
     ZTHROWR(TypeException,vm,"attempt to add segment with base type %{} to string",getArgTypeName(r->seg->cont.vt));
   }
-  ZStringRef ss(vm,r->seg->cont.str->substr(vm,r->seg->segStart,r->seg->segEnd-r->seg->segStart));
+  ZStringRef ss(vm,r->seg->cont.str->substr(vm,static_cast<uint32_t>(r->seg->segStart),
+                                            static_cast<uint32_t>(r->seg->segEnd-r->seg->segStart)));
   Value v;
   v.vt=vtString;
   v.flags=0;
@@ -857,9 +861,11 @@ static void addSegmentSegment(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   {
     Value v;
     v.vt=vtString;
-    v.flags=0;
-    ZString* s1=lv->str->substr(vm,ls.segStart,ls.segEnd-ls.segStart);
-    ZString* s2=rv->str->substr(vm,rs.segStart,rs.segEnd-rs.segStart);
+    v.flags=0u;
+    ZString* s1=lv->str->substr(vm,static_cast<uint32_t>(ls.segStart),
+                                static_cast<uint32_t>(ls.segEnd-ls.segStart));
+    ZString* s2=rv->str->substr(vm,static_cast<uint32_t>(rs.segStart),
+                                static_cast<uint32_t>(rs.segEnd-rs.segStart));
     v.str=ZString::concat(vm,s1,s2);
     vm->freeZString(s1);
     vm->freeZString(s2);
@@ -887,7 +893,7 @@ static void addSegmentStr(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   {
     ZTHROWR(TypeException,vm,"attempt to add segment with base type {} to string",getValueTypeName(lv->vt));
   }
-  ZString* s1=lv->str->substr(vm,ls.segStart,ls.segEnd-ls.segStart);
+  ZString* s1=lv->str->substr(vm,static_cast<uint32_t>(ls.segStart),static_cast<uint32_t>(ls.segEnd-ls.segStart));
   Value v;
   v.vt=vtString;
   v.flags=0;
@@ -904,7 +910,7 @@ static void addStrSegment(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   {
     ZTHROWR(TypeException,vm,"attempt to add segment with base type {} to string",getValueTypeName(rv->vt));
   }
-  ZString* s1=rv->str->substr(vm,rs.segStart,rs.segEnd-rs.segStart);
+  ZString* s1=rv->str->substr(vm,static_cast<uint32_t>(rs.segStart),static_cast<uint32_t>(rs.segEnd-rs.segStart));
   Value v;
   v.vt=vtString;
   v.flags=0;
@@ -949,7 +955,7 @@ SOP(saddArrScalar,l->arr->push(*r))
 SOP(saddSetAny,l->set->insert(*r))
 SOP(saddIntInt,l->iValue+=r->iValue)
 SOP(saddDoubleInt,l->dValue+=r->iValue)
-SOP(saddIntDouble,l->iValue+=r->dValue)
+SOP(saddIntDouble,l->iValue+=static_cast<int64_t>(r->dValue))
 SOP(saddDoubleDouble,l->dValue+=r->dValue)
 
 static void saddArrRefCounted(ZorroVM* vm,Value* l,const Value* r,Value* dst)
@@ -993,7 +999,7 @@ static void saddMapMap(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 SOP(ssubIntInt,l->iValue-=r->iValue)
 SOP(ssubDoubleInt,l->dValue-=r->iValue)
-SOP(ssubIntDouble,l->iValue-=r->dValue)
+SOP(ssubIntDouble,l->iValue-=static_cast<int64_t>(r->dValue))
 SOP(ssubDoubleDouble,l->dValue-=r->dValue)
 
 SOP(ssubMapAny,l->map->erase(*r))
@@ -1001,12 +1007,12 @@ SOP(ssubMapAny,l->map->erase(*r))
 
 SOP(smulIntInt,l->iValue*=r->iValue)
 SOP(smulDoubleInt,l->dValue*=r->iValue)
-SOP(smulIntDouble,l->iValue*=r->dValue)
+SOP(smulIntDouble,l->iValue*=static_cast<int64_t>(r->dValue))
 SOP(smulDoubleDouble,l->dValue*=r->dValue)
 
 SOPZ(sdivIntInt,iValue,"Division",l->iValue/=r->iValue)
 SOPZ(sdivDoubleInt,iValue,"Division",l->dValue/=r->iValue)
-SOPZ(sdivIntDouble,dValue,"Division",l->iValue/=r->dValue)
+SOPZ(sdivIntDouble,dValue,"Division",l->iValue/=static_cast<int64_t>(r->dValue))
 SOPZ(sdivDoubleDouble,dValue,"Division",l->dValue/=r->dValue)
 
 SOPZ(smodIntInt,iValue,"Module",l->iValue%=r->iValue)
@@ -1018,7 +1024,7 @@ SOPZ(smodDoubleDouble,dValue,"Module",l->dValue=fmod(l->dValue,r->dValue))
 
 static void sdivNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->nobj->classInfo->specialMethods[csmSDiv];
+  size_t midx=l->nobj->classInfo->specialMethods[csmSDiv];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator sdiv",l->nobj->classInfo->name);
@@ -1033,7 +1039,7 @@ static void sdivNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 static void smulNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->nobj->classInfo->specialMethods[csmSMul];
+  size_t midx=l->nobj->classInfo->specialMethods[csmSMul];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator smul",l->nobj->classInfo->name);
@@ -1048,7 +1054,7 @@ static void smulNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 static void addNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->nobj->classInfo->specialMethods[csmAdd];
+  size_t midx=l->nobj->classInfo->specialMethods[csmAdd];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator add",l->nobj->classInfo->name);
@@ -1065,7 +1071,7 @@ static void addNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 static void divNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->nobj->classInfo->specialMethods[csmDiv];
+  size_t midx=l->nobj->classInfo->specialMethods[csmDiv];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator div",l->nobj->classInfo->name);
@@ -1081,7 +1087,7 @@ static void divNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 static void mulNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->nobj->classInfo->specialMethods[csmMul];
+  size_t midx=l->nobj->classInfo->specialMethods[csmMul];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator mul",l->nobj->classInfo->name);
@@ -1097,9 +1103,9 @@ static void mulNObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 
 
-static void divObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
+static void divObjAny(ZorroVM* vm,Value* l,const Value* r,Value* /*dst*/)
 {
-  int midx=l->obj->classInfo->specialMethods[csmDiv];
+  size_t midx=l->obj->classInfo->specialMethods[csmDiv];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Class %{} do not have operator div",l->obj->classInfo->name);
@@ -1118,13 +1124,13 @@ static void saddIndexAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
     {
       throwOutOfBounds(vm,"Segment index of array out of bounds",s.segStart,za.getCount());
     }
-    Value* val=&za.getItemRef(s.segStart);
+    Value* val=&za.getItemRef(static_cast<size_t>(s.segStart));
     vm->saddMatrix[val->vt][r->vt](vm,val,r,dst);
   }else if(s.cont.vt==vtObject)
   {
     Value* val=&s.getValue;
     OVERGUARD(vm->saddMatrix[val->vt][r->vt](vm,val,r,dst));
-    int midx=s.cont.obj->classInfo->specialMethods[csmSetIndex];
+    size_t midx=s.cont.obj->classInfo->specialMethods[csmSetIndex];
     if(!midx)
     {
       ZTHROWR(TypeException,vm,"Class %{} do not have operator setIndex",s.cont.obj->classInfo->name);
@@ -1136,7 +1142,7 @@ static void saddIndexAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   }else if(s.cont.vt==vtNativeObject)
   {
     ClassInfo* ci=s.cont.nobj->classInfo;
-    int gidx=ci->specialMethods[csmGetIndex];
+    size_t gidx=ci->specialMethods[csmGetIndex];
     if(!gidx)
     {
       ZTHROWR(TypeException,vm,"Class %{} do not have operator getIndex",ci->name);
@@ -1154,7 +1160,7 @@ static void saddIndexAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
         return;
       }
     }
-    int sidx=ci->specialMethods[csmSetIndex];
+    size_t sidx=ci->specialMethods[csmSetIndex];
     if(!sidx)
     {
       ZTHROWR(TypeException,vm,"Class %{} do not have operator setIndex",ci->name);
@@ -1217,7 +1223,7 @@ static void mutateMemberRef(ZorroVM* vm,Value* l,const Value* r,Value* dst,Zorro
         OVERGUARD(matrix[val->vt][r->vt](vm,val,r,dst));
         if(((OpDstBase*)vm->ctx.lastOp)->dst.at==atStack && vm->ctx.lastOp->ot!=otPostInc)
         {
-          int sidx=ci->specialMethods[csmGetProp];
+          size_t sidx=ci->specialMethods[csmGetProp];
           if(sidx)
           {
             vm->pushValue(StringValue(p.name));
@@ -1241,7 +1247,7 @@ static void mutateMemberRef(ZorroVM* vm,Value* l,const Value* r,Value* dst,Zorro
       if(cp->getMethod)
       {
         v=&p.getValue;
-      }else if(cp->getIdx!=-1)
+      }else if(cp->getIdx!=SymInfo::invalidIndexValue)
       {
         if(cp->getIdx==cp->setIdx)
         {
@@ -1348,6 +1354,7 @@ static void ssubMemberRefAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 #define OVERLOAD1(mname,csm) \
     static void mname##ObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)\
 {\
+  (void)dst;\
   ClassInfo* ci=l->obj->classInfo;\
   if(!ci->specialMethods[csm])\
   {\
@@ -1364,6 +1371,7 @@ static void ssubMemberRefAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 #define ROVERLOAD1(mname,csm) \
     static void mname##ObjAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)\
 {\
+  (void)dst;\
   ClassInfo* ci=r->obj->classInfo;\
   if(!ci->specialMethods[csm])\
   {\
@@ -1417,13 +1425,13 @@ static void ssubSetAny(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 }
 
 
-static void incInt(ZorroVM* vm,Value* l)
+static void incInt(ZorroVM* /*vm*/,Value* l)
 {
   ++l->iValue;
 }
 
 
-static void incDouble(ZorroVM* vm,Value* l)
+static void incDouble(ZorroVM* /*vm*/,Value* l)
 {
   ++l->dValue;
 }
@@ -1438,12 +1446,12 @@ static void incSegment(ZorroVM* vm,Value* l)
   Segment& seg=*l->seg;
   if(seg.cont.vt==vtArray)
   {
-    Value& val=seg.cont.arr->getItemRef(l->seg->segStart);
+    Value& val=seg.cont.arr->getItemRef(static_cast<size_t>(l->seg->segStart));
     vm->incOps[val.vt](vm,&val);
   }else if(seg.cont.vt==vtObject)
   {
     ClassInfo* ci=seg.cont.obj->classInfo;
-    int midx=seg.cont.obj->classInfo->specialMethods[csmSetIndex];
+    size_t midx=seg.cont.obj->classInfo->specialMethods[csmSetIndex];
     if(!midx)
     {
       ZTHROWR(TypeException,vm,"Class %{} do not have operator setIndex",ci->name);
@@ -1452,7 +1460,7 @@ static void incSegment(ZorroVM* vm,Value* l)
     Value idxVal=IntValue(seg.segStart);
     if(((OpDstBase*)vm->ctx.lastOp)->dst.at==atStack && vm->ctx.lastOp->ot!=otPostInc)
     {
-      int sidx=ci->specialMethods[csmGetIndex];
+      size_t sidx=ci->specialMethods[csmGetIndex];
       if(sidx)
       {
         vm->pushValue(idxVal);
@@ -1471,12 +1479,12 @@ static void decSegment(ZorroVM* vm,Value* l)
   Segment& seg=*l->seg;
   if(seg.cont.vt==vtArray)
   {
-    Value& val=seg.cont.arr->getItemRef(l->seg->segStart);
+    Value& val=seg.cont.arr->getItemRef(static_cast<size_t>(l->seg->segStart));
     vm->incOps[val.vt](vm,&val);
   }else if(seg.cont.vt==vtObject)
   {
     ClassInfo* ci=seg.cont.obj->classInfo;
-    int midx=seg.cont.obj->classInfo->specialMethods[csmSetIndex];
+    size_t midx=seg.cont.obj->classInfo->specialMethods[csmSetIndex];
     if(!midx)
     {
       ZTHROWR(TypeException,vm,"Class %{} do not have operator setIndex",ci->name);
@@ -1485,7 +1493,7 @@ static void decSegment(ZorroVM* vm,Value* l)
     Value idxVal=IntValue(seg.segStart);
     if(((OpDstBase*)vm->ctx.lastOp)->dst.at==atStack && vm->ctx.lastOp->ot!=otPostDec)
     {
-      int sidx=ci->specialMethods[csmGetIndex];
+      size_t sidx=ci->specialMethods[csmGetIndex];
       if(sidx)
       {
         vm->pushValue(idxVal);
@@ -1542,12 +1550,12 @@ static void decMemberRef(ZorroVM* vm,Value* l)
 }
 
 
-static void decInt(ZorroVM* vm,Value* l)
+static void decInt(ZorroVM* /*vm*/,Value* l)
 {
   --l->iValue;
 }
 
-static void decDouble(ZorroVM* vm,Value* l)
+static void decDouble(ZorroVM* /*vm*/,Value* l)
 {
   --l->dValue;
 }
@@ -1608,19 +1616,19 @@ static void errorUnFunc(ZorroVM* vm,Value* v)
   ZTHROWR(RuntimeException,vm,"%{}",msg);
 }
 
-static void errorFmtOp(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* extra,Value* dst)
+static void errorFmtOp(ZorroVM* vm,Value* v,int /*w*/,int /*p*/,ZString* /*flags*/,Value* /*extra*/,Value* /*dst*/)
 {
   std::string msg="Invalid format operand ";
   msg+=getValueTypeName(v->vt);
   ZTHROWR(RuntimeException,vm,"%{}",msg);
 }
 
-static bool errorForOp(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool errorForOp(ZorroVM* vm,Value* val,Value* /*var*/,Value* /*tmp*/)
 {
   ZTHROWR(RuntimeException,vm,"Invalid type for enumeration %{}",getValueTypeName(val->vt));
 }
 
-static bool errorFor2Op(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* tmp)
+static bool errorFor2Op(ZorroVM* vm,Value* val,Value* /*var1*/,Value* /*var2*/,Value* /*tmp*/)
 {
   ZTHROWR(RuntimeException,vm,"Invalid type for enumeration %{}",getValueTypeName(val->vt));
 }
@@ -1715,7 +1723,7 @@ static void refSegment(ZorroVM* vm,Value* src,Value* dst)
   {
     throwOutOfBounds(vm,"Segment index of array out of bounds",seg.segStart,za.getCount());
   }
-  Value& val=za.getItemRef(seg.segStart);
+  Value& val=za.getItemRef(static_cast<size_t>(seg.segStart));
   if(val.vt!=vtRef)
   {
     ValueRef* rval=vm->allocRef();
@@ -1798,7 +1806,7 @@ static void refMemberRef(ZorroVM* vm,Value* src,Value* dst)
         if(cp->getMethod)
         {
           item=&p.getValue;
-        }else if(cp->getIdx!=-1)
+        }else if(cp->getIdx!=SymInfo::invalidIndexValue)
         {
           item=p.obj.obj->members+cp->getIdx;
         }
@@ -1836,12 +1844,12 @@ static void refMemberRef(ZorroVM* vm,Value* src,Value* dst)
 
 
 
-static bool anyToFalse(ZorroVM* vm,const Value* src)
+static bool anyToFalse(ZorroVM* /*vm*/,const Value* /*src*/)
 {
   return false;
 }
 
-static bool anyToTrue(ZorroVM* vm,const Value* src)
+static bool anyToTrue(ZorroVM* /*vm*/,const Value* /*src*/)
 {
   return true;
 }
@@ -1888,27 +1896,27 @@ static bool refToBool(ZorroVM* vm,const Value* src)
   return vm->boolOps[src->valueRef->value.vt](vm,&src->valueRef->value);
 }
 
-static bool boolToBool(ZorroVM* vm,const Value* src)
+static bool boolToBool(ZorroVM* /*vm*/,const Value* src)
 {
   return src->bValue;
 }
 
-static bool intToBool(ZorroVM* vm,const Value* src)
+static bool intToBool(ZorroVM* /*vm*/,const Value* src)
 {
   return src->iValue!=0;
 }
 
-static bool doubleToBool(ZorroVM* vm,const Value* src)
+static bool doubleToBool(ZorroVM* /*vm*/,const Value* src)
 {
   return src->dValue!=0;
 }
 
-static bool intToNotBool(ZorroVM* vm,const Value* src)
+static bool intToNotBool(ZorroVM* /*vm*/,const Value* src)
 {
   return src->iValue==0;
 }
 
-static bool doubleToNotBool(ZorroVM* vm,const Value* src)
+static bool doubleToNotBool(ZorroVM* /*vm*/,const Value* src)
 {
   return src->dValue==0;
 }
@@ -1939,6 +1947,9 @@ static void eqAnyBool(ZorroVM* vm,Value* l,const Value* r)
 
 #define BOP(name,op) static bool name(ZorroVM* vm,const Value* l,const Value* r)\
 {\
+  (void)vm;\
+  (void)l;\
+  (void)r;\
   return op;\
 }
 
@@ -1978,8 +1989,15 @@ BOP(neqClassClass,l->classInfo!=r->classInfo)
 
 BOP(inAnyMap,r->map->find(*l)!=r->map->end())
 BOP(inAnySet,r->set->find(*l)!=r->set->end())
-BOP(inIntRange,l->iValue>=r->range->start && l->iValue<=r->range->end)
+//BOP(inIntRange,l->iValue>=r->range->start && l->iValue<=r->range->end)
 BOP(inStrObj,r->obj->classInfo->symMap.findSymbol(l->str)!=0)
+
+static bool inIntRange(ZorroVM* vm,const Value* l,const Value* r)
+{
+  (void) vm;
+  return l->iValue >= r->range->start && l->iValue <= r->range->end &&
+          (r->range->step==0 || ((l->iValue - r->range->start) % r->range->step) == 0);
+}
 
 static bool eqStrSegment(ZorroVM* vm,const Value* l,const Value* r)
 {
@@ -1992,7 +2010,7 @@ static bool eqStrSegment(ZorroVM* vm,const Value* l,const Value* r)
   ZString* str=r->seg->cont.str;
   int64_t strLen=(int64_t)str->getLength();
   if(start<0 || start>=strLen || start+len>strLen)return false;
-  return l->str->equalsTo(str->c_str(vm)+start,len);//!!todo fix this!
+  return l->str->equalsTo(str->c_str(vm)+start,static_cast<size_t>(len));//!!todo fix this!
 }
 
 static bool eqSegmentStr(ZorroVM* vm,const Value* l,const Value* r)
@@ -2006,10 +2024,10 @@ static bool eqSegmentStr(ZorroVM* vm,const Value* l,const Value* r)
   ZString* str=l->seg->cont.str;
   int64_t strLen=(int64_t)str->getLength();
   if(start<0 || start>=strLen || start+len>strLen)return false;
-  return r->str->equalsTo(str->c_str(vm)+start,len);//!!todo fix this!
+  return r->str->equalsTo(str->c_str(vm)+start,static_cast<size_t>(len));//!!todo fix this!
 }
 
-static bool eqSegmentSegment(ZorroVM* vm,const Value* l,const Value* r)
+static bool eqSegmentSegment(ZorroVM* /*vm*/,const Value* l,const Value* r)
 {
   if(l->seg->cont.vt!=vtString || r->seg->cont.vt!=vtString)
   {
@@ -2028,7 +2046,8 @@ static bool eqSegmentSegment(ZorroVM* vm,const Value* l,const Value* r)
   if(start2<0 || start2>=strLen2 || start2+len2>strLen2)return false;
   if(len1!=len2)return false;
 
-  return ZString::compare(str1->getDataPtr()+start1,str1->getCharSize(),len1,str2->getDataPtr(),str2->getCharSize(),len2)==0;//!!todo fix this!
+  return ZString::compare(str1->getDataPtr()+start1,str1->getCharSize(),static_cast<size_t>(len1),
+          str2->getDataPtr(),str2->getCharSize(),static_cast<size_t>(len2))==0;//!!todo fix this!
 }
 
 
@@ -2191,7 +2210,7 @@ static void makeObjectMemberRef(ZorroVM* vm,Value* l,const Value* r,Value* dst)
     if(sym->st==sytProperty)
     {
       ClassPropertyInfo* cp=(ClassPropertyInfo*)sym;
-      if(cp->setIdx==-1 && cp->setMethod==0)
+      if(cp->setIdx==SymInfo::invalidIndexValue && cp->setMethod==nullptr)
       {
         ZTHROWR(TypeException,vm,"Property %{} of class %{} is read only",ZStringRef(vm,r->str),ci->name);
       }
@@ -2212,8 +2231,8 @@ static void makeObjectMemberRef(ZorroVM* vm,Value* l,const Value* r,Value* dst)
     }
   }else
   {
-    int idx;
-    if((idx=ci->specialMethods[csmGetProp]))
+    size_t idx = ci->specialMethods[csmGetProp];
+    if(idx)
     {
       if(!ci->specialMethods[csmSetProp])
       {
@@ -2265,7 +2284,7 @@ static void makeSliceIndex(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   {
     throwOutOfBounds(vm,"Slice index of array out of bounds",idx,za.getCount());
   }
-  Value* rIdx=&za.getItem(idx);
+  Value* rIdx=&za.getItem(static_cast<size_t>(idx));
   if(cnt->vt==vtMap)
   {
     vm->mkKeyRefMatrix[cnt->vt][rIdx->vt](vm,cnt,rIdx,dst);
@@ -2282,7 +2301,7 @@ static void makeSliceIndex(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 static void makeObjectIndex(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->obj->classInfo->specialMethods[csmGetIndex];
+  size_t midx=l->obj->classInfo->specialMethods[csmGetIndex];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Class %{} do not have operator getIndex",l->obj->classInfo->name);
@@ -2312,7 +2331,7 @@ static void makeObjectIndex(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 
 static void makeNObjectIndex(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
-  int midx=l->nobj->classInfo->specialMethods[csmGetIndex];
+  size_t midx=l->nobj->classInfo->specialMethods[csmGetIndex];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Class %{} do not have operator getIndex",l->nobj->classInfo->name);
@@ -2362,7 +2381,7 @@ static void setSliceIndex(ZorroVM* vm,Value* arr,const Value* vidx,const Value* 
   {
     throwOutOfBounds(vm,"Slice index out of bounds",idx,za.getCount());
   }
-  Value* rIdx=&za.getItem(idx);
+  Value* rIdx=&za.getItem(static_cast<size_t>(idx));
   if(cnt->vt==vtMap)
   {
     vm->setKeyMatrix[cnt->vt][rIdx->vt](vm,cnt,rIdx,item,dst);
@@ -2449,7 +2468,7 @@ static void indexSliceInt(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   {
     throwOutOfBounds(vm,"Slice index is out of bounds",idx,za.getCount());
   }
-  Value* rIdx=&za.getItem(idx);
+  Value* rIdx=&za.getItem(static_cast<size_t>(idx));
   if(cnt->vt==vtMap)
   {
     vm->getKeyMatrix[cnt->vt][rIdx->vt](vm,cnt,rIdx,dst);
@@ -2533,7 +2552,7 @@ static void setKeyObjAny(ZorroVM* vm,Value* l,const Value* a,const Value* r,Valu
 static void getIndexNObjInt(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 {
   ClassInfo* ci=l->nobj->classInfo;
-  int gidx=ci->specialMethods[csmGetIndex];
+  size_t gidx=ci->specialMethods[csmGetIndex];
   if(!gidx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator getIndex",ci->name);
@@ -2552,7 +2571,7 @@ static void getIndexNObjInt(ZorroVM* vm,Value* l,const Value* r,Value* dst)
 static void setIndexNObjInt(ZorroVM* vm,Value* l,const Value* a,const Value* r,Value* dst)
 {
   ClassInfo* ci=l->nobj->classInfo;
-  int sidx=ci->specialMethods[csmSetIndex];
+  size_t sidx=ci->specialMethods[csmSetIndex];
   if(!sidx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator setIndex",ci->name);
@@ -2684,7 +2703,7 @@ static void formatRef(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* ext
   vm->fmtOps[v->valueRef->value.vt](vm,&v->valueRef->value,w,p,flags,extra,dst);
 }
 
-static void formatNil(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* extra,Value* dst)
+static void formatNil(ZorroVM* vm,Value* /*v*/,int w,int p,ZString* flags,Value* extra,Value* dst)
 {
   Value val;
   val.vt=vtString;
@@ -2703,7 +2722,7 @@ static void formatBool(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* ex
 }
 
 
-static void formatInt(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,Value* dst)
+static void formatInt(ZorroVM* vm,Value* v,int w,int /*p*/,ZString* flags,Value*,Value* dst)
 {
   if(!dst)return;
   kst::FormatBuffer buf;
@@ -2725,12 +2744,12 @@ static void formatInt(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,Val
     //len=snprintf(buf, sizeof(buf), "%" PRId64,v->iValue);
     kst::format((buf.getArgList(),"%{}",v->iValue));
   }
-  int len=buf.Length();
+  size_t len=buf.Length();
   ZString* res=vm->allocZString();
-  int slen=len;
-  if(w>slen)slen=w;
+  size_t slen=len;
+  if(w>static_cast<int>(slen))slen=static_cast<size_t>(w);
   char* strbuf=vm->allocStr(slen+1);
-  if(w>len)
+  if(w>static_cast<int>(len))
   {
     if(ff.left)
     {
@@ -2760,12 +2779,12 @@ static void formatDouble(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,
   char buf[64];
   FormatFlags ff;
   parseFlags(vm,flags,ff);
-  int len=snprintf(buf,64,"%.*lf",p,v->dValue);
+  size_t len=static_cast<size_t>(snprintf(buf,64,"%.*lf",p,v->dValue));
   ZString* res=vm->allocZString();
-  int slen=len;
-  if(w>slen)slen=w;
+  size_t slen=len;
+  if(w>static_cast<int>(slen))slen=static_cast<size_t>(w);
   char* strbuf=vm->allocStr(slen+1);
-  if(w>len)
+  if(w>static_cast<int>(len))
   {
     if(ff.left)
     {
@@ -2801,11 +2820,11 @@ static void formatStr(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,Val
   FormatFlags ff;
   parseFlags(vm,flags,ff);
   ZString* src=v->str;
-  int len=src->getLength();
+  size_t len=src->getLength();
   int cs=src->getCharSize();
-  if(p>0 && len>p)len=p;
-  int slen=len;
-  if(slen<w)slen=w;
+  if(p>0 && static_cast<int>(len)>p)len=static_cast<size_t>(p);
+  size_t slen=len;
+  if(static_cast<int>(slen)<w)slen=static_cast<size_t>(w);
   if(slen<len)slen=len;
   char* strbuf=vm->allocStr(cs==1?slen+1:slen*2);
   if(slen>len)
@@ -2819,7 +2838,7 @@ static void formatStr(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,Val
       }else
       {
         char* ptr=strbuf;
-        for(int i=0;i<slen-len;++i)ZString::putUcs2Char(ptr,' ');
+        for(size_t i=0;i<slen-len;++i)ZString::putUcs2Char(ptr,' ');
         memcpy(ptr,src->getDataPtr(),len*cs);
       }
     }else
@@ -2831,7 +2850,7 @@ static void formatStr(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value*,Val
       }else
       {
         char* ptr=strbuf+(slen-len)*cs;
-        for(int i=0;i<slen-len;++i)ZString::putUcs2Char(ptr,' ');
+        for(size_t i=0;i<slen-len;++i)ZString::putUcs2Char(ptr,' ');
       }
     }
   }else
@@ -2862,7 +2881,7 @@ static void formatArrEx(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* e
     return;
   }
   ZString* delim=0;
-  int delimLength=0;
+  size_t delimLength=0;
   CStringWrap wrap(0,0,0);
   if(extra)
   {
@@ -2877,7 +2896,7 @@ static void formatArrEx(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* e
   Value arr16[16];
   Value* arr=sz<=16?arr16:new Value[sz];
   Value tmp=NilValue;
-  int len=0;
+  size_t len=0;
   int cs=1;
   for(size_t idx=from;idx<till;++idx)
   {
@@ -2917,7 +2936,7 @@ static void formatArrEx(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* e
       astr.uappend(ptr);
     }else
     {
-      int l=arr[idx].str->getLength();
+      size_t l=arr[idx].str->getLength();
       memcpy(ptr,arr[idx].str->c_str(vm),l);
       ptr+=l;
     }
@@ -2958,17 +2977,18 @@ static void formatSeg(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* ext
   Segment& seg=*v->seg;
   if(seg.cont.vt==vtString)
   {
-    ZStringRef str(vm,seg.cont.str->substr(vm,seg.segStart,seg.segEnd-seg.segStart));
+    ZStringRef str(vm,seg.cont.str->substr(vm,static_cast<uint32_t>(seg.segStart),
+                                           static_cast<uint32_t>(seg.segEnd-seg.segStart)));
     Value tmpStr=StringValue(str);
     formatStr(vm,&tmpStr,w,p,flags,0,dst);
   }else if(seg.cont.vt==vtArray)
   {
-    size_t from=seg.segStart;
+    size_t from=static_cast<size_t>(seg.segStart);
     if(from>seg.cont.arr->getCount())
     {
       from=seg.cont.arr->getCount();
     }
-    size_t to=seg.segEnd;
+    size_t to=static_cast<size_t>(seg.segEnd);
     if(to>seg.cont.arr->getCount())
     {
       to=seg.cont.arr->getCount();
@@ -2984,11 +3004,11 @@ static void formatSeg(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* ext
   }
 }
 
-static void formatObj(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* extra,Value* dst)
+static void formatObj(ZorroVM* vm,Value* v,int w,int p,ZString* flags,Value* extra,Value* /*dst*/)
 {
   ClassInfo* ci=v->obj->classInfo;
-  int m;
-  if(!(m=ci->specialMethods[csmFormat]))
+  size_t m = ci->specialMethods[csmFormat];
+  if(!m)
   {
     ZTHROWR(TypeException,vm,"Class %{} do not have operator format",v->obj->classInfo->name);
   }
@@ -3139,7 +3159,7 @@ static void copySegment(ZorroVM* vm,Value* val,Value* dst)
     Value res;
     res.vt=vtString;
     res.flags=0;
-    res.str=str->substr(vm,start,length);
+    res.str=str->substr(vm,static_cast<uint32_t>(start),static_cast<uint32_t>(length));
     ZASSIGN(vm,dst,&res);
   }else if(sv->vt==vtArray)
   {
@@ -3152,11 +3172,11 @@ static void copySegment(ZorroVM* vm,Value* val,Value* dst)
       throwOutOfBounds(vm,"Array index of segment is out of bounds",start>arrlen?start:start+length,arrlen);
     }
     ZArray* outArr=vm->allocZArray();
-    outArr->resize(length);
+    outArr->resize(static_cast<size_t>(length));
     for(int64_t i=0;i<length;++i)
     {
-      Value* srcVal=&arr->getItem(start+i);
-      Value* dstVal=&outArr->getItemRef(i);
+      Value* srcVal=&arr->getItem(static_cast<size_t>(start+i));
+      Value* dstVal=&outArr->getItemRef(static_cast<size_t>(i));
       if(ZISREFTYPE(srcVal))
       {
         ZASSIGN(vm,dstVal,srcVal);
@@ -3203,7 +3223,7 @@ static void copySlice(ZorroVM* vm,Value* val,Value* dst)
           ZTHROWR(TypeException,vm,"Invalid type for slice index:%{}",getValueTypeName(idx.vt));
         }
         ZString::char_type wc;
-        memcpy(&wc,strData+idx.iValue*cs,cs);
+        memcpy(&wc,strData+idx.iValue*cs,static_cast<size_t>(cs));
         if(wc>255)
         {
           dcs=cs;
@@ -3229,8 +3249,8 @@ static void copySlice(ZorroVM* vm,Value* val,Value* dst)
           throwOutOfBounds(vm,"Slice of string index out of bounds",idx.iValue,str->getLength());
         }
         ZString::char_type wc;
-        memcpy(&wc,strData+idx.iValue*cs,cs);
-        newStr[i]=wc;
+        memcpy(&wc,strData+idx.iValue*cs,static_cast<size_t>(cs));
+        newStr[i]=static_cast<char>(wc);
       }
       newStr[za.getCount()]=0;
     }else
@@ -3249,7 +3269,7 @@ static void copySlice(ZorroVM* vm,Value* val,Value* dst)
           vm->freeStr(newStr,za.getCount()*dcs);
           throwOutOfBounds(vm,"Slice of string index out of bounds",idx.iValue,str->getLength());
         }
-        memcpy(newStr+i*dcs,strData+idx.iValue*cs,dcs);
+        memcpy(newStr+i*dcs,strData+idx.iValue*cs,static_cast<size_t>(dcs));
       }
     }
     if(dcs==1)
@@ -3268,18 +3288,18 @@ static void copySlice(ZorroVM* vm,Value* val,Value* dst)
     outArr->resize(za.getCount());
     for(int64_t i=0;i<(int64_t)za.getCount();++i)
     {
-      Value& idx=za.getItem(i);
+      Value& idx=za.getItem(static_cast<size_t>(i));
       if(idx.vt!=vtInt)
       {
         vm->freeZArray(outArr);
         ZTHROWR(TypeException,vm,"Invalid type for slice index:%{}",getValueTypeName(idx.vt));
       }
-      if(idx.iValue<0 || idx.iValue>=arr->getCount())
+      if(idx.iValue<0 || static_cast<size_t>(idx.iValue)>=arr->getCount())
       {
         throwOutOfBounds(vm,"Slice of string index out of bounds",idx.iValue,arr->getCount());
       }
-      Value* srcVal=&arr->getItem(idx.iValue);
-      Value* dstVal=&outArr->getItemRef(i);
+      Value* srcVal=&arr->getItem(static_cast<size_t>(idx.iValue));
+      Value* dstVal=&outArr->getItemRef(static_cast<size_t>(i));
       if(ZISREFTYPE(srcVal))
       {
         ZASSIGN(vm,dstVal,srcVal);
@@ -3302,7 +3322,7 @@ static void copySlice(ZorroVM* vm,Value* val,Value* dst)
 
 static void copyNObject(ZorroVM* vm,Value* val,Value* dst)
 {
-  int midx=val->nobj->classInfo->specialMethods[csmCopy];
+  size_t midx=val->nobj->classInfo->specialMethods[csmCopy];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Native class %{} do not have operator copy",val->nobj->classInfo->name);
@@ -3313,9 +3333,9 @@ static void copyNObject(ZorroVM* vm,Value* val,Value* dst)
   vm->clearResult();
 }
 
-static void copyObject(ZorroVM* vm,Value* val,Value* dst)
+static void copyObject(ZorroVM* vm,Value* val,Value* /*dst*/)
 {
-  int midx=val->nobj->classInfo->specialMethods[csmCopy];
+  size_t midx=val->nobj->classInfo->specialMethods[csmCopy];
   if(!midx)
   {
     ZTHROWR(TypeException,vm,"Class %{} do not have operator copy",val->nobj->classInfo->name);
@@ -3325,6 +3345,7 @@ static void copyObject(ZorroVM* vm,Value* val,Value* dst)
 
 #define GETTYPEOP(name,type) static void getType##name(ZorroVM* vm,Value* val,Value* dst)\
 {\
+  (void)val;\
   if(!dst)return;\
   Value cls;\
   cls.vt=vtClass;\
@@ -3384,8 +3405,8 @@ OpBase* ZorroVM::getFuncEntry(FuncInfo* f,CallFrame* cf)
     cf->args=f->argsCount;
     return f->varArgEntry;
   }
-  int missParams;
-  if(f->defValEntries.empty() || (missParams=f->argsCount-actualArgs)>(int)f->defValEntries.size())
+  size_t missParams;
+  if(f->defValEntries.empty() || (missParams=f->argsCount-actualArgs)>f->defValEntries.size())
   {
     ZTHROWR(RuntimeException,this,"Invalid number of arguments for function %{}",f->name);
   }
@@ -3415,19 +3436,19 @@ OpBase* ZorroVM::getFuncEntryNArgs(FuncInfo* f,CallFrame* cf)
   *ctx.dataStack.stackTop=NilValue;
   ctx.dataStack.pop();
   int defValIdx=-1;
-  for(int i=actualArgs;i<f->argsCount;++i)
+  for(index_type i=actualArgs;i<f->argsCount;++i)
   {
     ZMap::iterator it=argsMap->find(StringValue(f->locals[i]->name.val));
     if(it==argsMap->end())
     {
-      if(f->defValEntries.empty() || defValIdx+1==f->defValEntries.size())
+      if(f->defValEntries.empty() || defValIdx+1==static_cast<int>(f->defValEntries.size()))
       {
         ZUNREF(this,&argsMapVal);
         ZTHROWR(RuntimeException,this,"Argument %{} not defined in func %{} call",f->locals[i]->name.val,f->name);
       }
       if(defValIdx==-1)
       {
-        defValIdx=f->defValEntries.size()-(f->argsCount-actualArgs);
+        defValIdx=static_cast<int>(f->defValEntries.size()-(f->argsCount-actualArgs));
       }
       pushValue(NilValue);
       continue;
@@ -3450,7 +3471,7 @@ OpBase* ZorroVM::getFuncEntryNArgs(FuncInfo* f,CallFrame* cf)
   cf->args=f->argsCount+f->namedArgs;
   if(defValIdx!=-1)
   {
-    return f->defValEntries[defValIdx];
+    return f->defValEntries[static_cast<size_t>(defValIdx)];
   }
   return f->namedArgs?f->namedArgEntry:f->entry;
 }
@@ -3545,7 +3566,7 @@ static void callClass(ZorroVM* vm,Value* val)
 {
   ClassInfo* classInfo=val->classInfo;
   CallFrame* cf=vm->ctx.callStack.stackTop;
-  int ctorIdx=classInfo->specialMethods[csmConstructor];
+  size_t ctorIdx=classInfo->specialMethods[csmConstructor];
   Value* ctor=ctorIdx?&vm->symbols.globals[classInfo->specialMethods[csmConstructor]]:0;
   if(ctor && ctor->vt==vtCMethod)
   {
@@ -3731,7 +3752,7 @@ static bool initForRange(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   return true;
 }
 
-static bool stepForRange(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool stepForRange(ZorroVM* vm,Value* /*val*/,Value* var,Value* tmp)
 {
   if(var->vt!=vtInt)
   {
@@ -3795,13 +3816,13 @@ static bool initForSegment(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   tmp->seg->segStart=seg.step>0?seg.segStart:seg.segEnd-1;
   tmp->seg->segEnd=seg.segEnd;
   tmp->seg->step=seg.step;
-  Value* itemPtr=&za.getItem(tmp->seg->segStart);
+  Value* itemPtr=&za.getItem(static_cast<size_t>(tmp->seg->segStart));
   ZASSIGN(vm,var,itemPtr);
   return true;
 }
 
 
-static bool stepForArray(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool stepForArray(ZorroVM* vm,Value* /*val*/,Value* var,Value* tmp)
 {
   Segment& seg=*tmp->seg;
   ZArray& arr=*seg.cont.arr;
@@ -3818,7 +3839,7 @@ static bool stepForArray(ZorroVM* vm,Value* val,Value* var,Value* tmp)
       return false;
     }
   }
-  Value* itemPtr=&arr.getItem(seg.segStart);
+  Value* itemPtr=&arr.getItem(static_cast<size_t>(seg.segStart));
   ZASSIGN(vm,var,itemPtr);
   return true;
 }
@@ -3846,7 +3867,7 @@ static bool initForSlice(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   return true;
 }
 
-static bool stepForSlice(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool stepForSlice(ZorroVM* vm,Value* /*val*/,Value* var,Value* tmp)
 {
   Slice& slice=*tmp->slice;
   if(++slice.index>=slice.indeces.arr->getCount())
@@ -3879,7 +3900,7 @@ static bool initForSet(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   return true;
 }
 
-static bool stepForSet(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool stepForSet(ZorroVM* /*vm*/,Value* /*val*/,Value* var,Value* tmp)
 {
   if(!tmp->iter->cont.set->nextForIter(tmp->iter))
   {
@@ -3889,7 +3910,7 @@ static bool stepForSet(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   return true;
 }
 
-static bool initForFunc(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool initForFunc(ZorroVM* vm,Value* val,Value* /*var*/,Value* tmp)
 {
   ZUNREF(vm,tmp);
   tmp->vt=vtCoroutine;
@@ -3914,7 +3935,7 @@ static bool initForFunc(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   return true;
 }
 
-static bool stepForFunc(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool stepForFunc(ZorroVM* vm,Value* /*val*/,Value* /*var*/,Value* tmp)
 {
   if(tmp->cor->ctx.nextOp)
   {
@@ -3927,7 +3948,7 @@ static bool stepForFunc(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   }
 }
 
-static bool initForClosure(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool initForClosure(ZorroVM* vm,Value* val,Value* /*var*/,Value* tmp)
 {
   ZUNREF(vm,tmp);
   Closure& cls=*val->cls;
@@ -3959,7 +3980,7 @@ static bool initForClosure(ZorroVM* vm,Value* val,Value* var,Value* tmp)
   return true;
 }
 
-static bool initForDelegate(ZorroVM* vm,Value* val,Value* var,Value* tmp)
+static bool initForDelegate(ZorroVM* vm,Value* val,Value* /*var*/,Value* tmp)
 {
   ZUNREF(vm,tmp);
   Delegate& dlg=*val->dlg;
@@ -4016,7 +4037,7 @@ static bool initFor2Map(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* it
   return true;
 }
 
-static bool stepFor2Map(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* iter)
+static bool stepFor2Map(ZorroVM* /*vm*/,Value* /*val*/,Value* var1,Value* var2,Value* iter)
 {
   if(!iter->iter->cont.map->nextForIter(iter->iter))
   {
@@ -4083,13 +4104,13 @@ static bool initFor2Segment(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value
   idx.flags=0;
   idx.iValue=0;
   ZASSIGN(vm,var1,&idx);
-  Value* itemPtr=&za.getItem(tmp->seg->segStart);
+  Value* itemPtr=&za.getItem(static_cast<size_t>(tmp->seg->segStart));
   ZASSIGN(vm,var2,itemPtr);
   return true;
 }
 
 
-static bool stepFor2Array(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* iter)
+static bool stepFor2Array(ZorroVM* vm,Value* /*val*/,Value* var1,Value* var2,Value* iter)
 {
   Segment& seg=*iter->seg;
   ZArray& arr=*seg.cont.arr;
@@ -4110,7 +4131,7 @@ static bool stepFor2Array(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* 
   idx.vt=vtInt;
   idx.flags=0;
   idx.iValue=seg.step>0?seg.segStart-seg.segBase:seg.segEnd-1-seg.segStart;
-  Value* itemPtr=&arr.getItem(seg.segStart);
+  Value* itemPtr=&arr.getItem(static_cast<size_t>(seg.segStart));
   ZASSIGN(vm,var1,&idx);
   ZASSIGN(vm,var2,itemPtr);
   return true;
@@ -4140,7 +4161,7 @@ static bool initFor2Slice(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* 
   return true;
 }
 
-static bool stepFor2Slice(ZorroVM* vm,Value* val,Value* var1,Value* var2,Value* tmp)
+static bool stepFor2Slice(ZorroVM* vm,Value* /*val*/,Value* var1,Value* var2,Value* tmp)
 {
   Slice& slice=*tmp->slice;
   if(++slice.index>=slice.indeces.arr->getCount())
@@ -4418,7 +4439,7 @@ static void unrefObj(ZorroVM* vm,Value* val)
       else
       {
         CLEARWEAK;
-        for(int i=0;i<zo.classInfo->membersCount;i++)
+        for(size_t i=0;i<zo.classInfo->membersCount;i++)
         {
           ZUNREF(vm,&zo.members[i]);
         }
@@ -4436,7 +4457,7 @@ static void unrefObj(ZorroVM* vm,Value* val)
   }else
   {
     CLEARWEAK;
-    for(int i=0;i<zo.classInfo->membersCount;i++)
+    for(size_t i=0;i<zo.classInfo->membersCount;i++)
     {
       ZUNREF(vm,&zo.members[i]);
     }
@@ -4454,7 +4475,7 @@ static void unrefObj(ZorroVM* vm,Value* val)
 static void unrefNObj(ZorroVM* vm,Value* val)
 {
   CLEARWEAK;
-  int didx=val->nobj->classInfo->specialMethods[csmDestructor];
+  size_t didx=val->nobj->classInfo->specialMethods[csmDestructor];
   if(didx)
   {
     vm->symbols.globals[didx].cmethod->cmethod(vm,val);
@@ -4657,7 +4678,7 @@ static void getObjectMember(ZorroVM* vm,Value* l,const Value* r,Value* dst)
   }else if(info->st==sytProperty)
   {
     ClassPropertyInfo* p=(ClassPropertyInfo*)info;
-    if(p->getIdx!=-1)
+    if(p->getIdx!=SymInfo::invalidIndexValue)
     {
       Value* v=&l->obj->members[p->getIdx];
       ZASSIGN(vm,dst,v);
@@ -4727,7 +4748,7 @@ static void setObjectMember(ZorroVM* vm,Value* l,const Value* a,const Value* r,V
   }else if(info->st==sytProperty)
   {
     ClassPropertyInfo* p=(ClassPropertyInfo*)info;
-    if(p->setIdx!=-1)
+    if(p->setIdx!=SymInfo::invalidIndexValue)
     {
       Value* v=&l->obj->members[p->setIdx];
       ZASSIGN(vm,v,r);
@@ -4881,7 +4902,7 @@ void ZorroVM::throwValue(Value* obj)
   getTypeOps[obj->vt](this,obj,&classVal);
   ClassInfo* cls=classVal.classInfo;
   Coroutine* corArr[32];
-  int corCnt=0;
+  size_t corCnt=0;
 
   for(;;)
   {
@@ -4906,10 +4927,10 @@ void ZorroVM::throwValue(Value* obj)
           continue;
         }
       }
-      int lbase=ctx.callStack.stack[ci.callLevel-1].localBase;
+      size_t lbase=ctx.callStack.stack[ci.callLevel-1].localBase;
       Value* dst=ctx.dataStack.stack+lbase+ci.idx;
       ZASSIGN(this,dst,obj);
-      while(ctx.callStack.size()>(int)ci.callLevel)
+      while(ctx.callStack.size()>ci.callLevel)
       {
         ctx.callStack.pop();
       }
@@ -4923,17 +4944,17 @@ void ZorroVM::throwValue(Value* obj)
       }
       if(cf->closedCall)
       {
-        Value* cls=ctx.dataStack.stack+ci.stackLevel-1;
-        ctx.dataPtrs[atClosed]=cls->cls->closedValues;
+        Value* clsv=ctx.dataStack.stack+ci.stackLevel-1;
+        ctx.dataPtrs[atClosed]=clsv->cls->closedValues;
       }
-      for(int i=corCnt-1;i>=0;--i)
+      for(size_t i=corCnt-1;i<corCnt;--i)
       {
-        ZVMContext& ctx=corArr[i]->ctx;
-        for(Value* ptr=ctx.dataStack.stack,*end=ctx.dataStack.stackTop+1;ptr!=end;++ptr)
+        ZVMContext& cctx=corArr[i]->ctx;
+        for(Value* ptr=cctx.dataStack.stack,*end=cctx.dataStack.stackTop+1;ptr!=end;++ptr)
         {
           ZUNREF(this,ptr);
         }
-        ctx.nextOp=0;
+        cctx.nextOp=0;
       }
       cleanStack(ci.stackLevel);
       return;
@@ -5034,7 +5055,7 @@ std::string ZorroVM::getStackTraceText(bool skipLevel)
   return rv;
 }
 
-void ZorroVM::callCMethod(Value* obj,MethodInfo* meth,int argsCount)
+void ZorroVM::callCMethod(Value* obj,MethodInfo* meth,index_type argsCount)
 {
   INITCALL(this,ctx.lastOp,ctx.nextOp,argsCount,false,false,false);
   cf->funcIdx=meth->index;
@@ -5046,7 +5067,7 @@ void ZorroVM::callCMethod(Value* obj,MethodInfo* meth,int argsCount)
   ctx.dataPtrs[atLocal]=saveLocal;
 }
 
-void ZorroVM::callCMethod(Value* obj,index_type methIdx,int argsCount)
+void ZorroVM::callCMethod(Value* obj,index_type methIdx,index_type argsCount)
 {
   INITCALL(this,ctx.lastOp,ctx.nextOp,argsCount,false,false,false);
   cf->funcIdx=methIdx;
@@ -5058,17 +5079,17 @@ void ZorroVM::callCMethod(Value* obj,index_type methIdx,int argsCount)
   ctx.dataPtrs[atLocal]=saveLocal;
 }
 
-void ZorroVM::callMethod(Value* obj,index_type midx,int argsCount,bool isOverload)
+void ZorroVM::callMethod(Value* obj,index_type midx,index_type argsCount,bool isOverload)
 {
   callMethod(obj,symbols.globals[midx].method,argsCount,isOverload);
 }
 
-void ZorroVM::callMethod(Value* obj,MethodInfo* meth,int argsCount,bool isOverload)
+void ZorroVM::callMethod(Value* obj,MethodInfo* meth,index_type argsCount,bool isOverload)
 {
   INITCALL(this,ctx.lastOp,ctx.nextOp,argsCount,true,false,isOverload);
   cf->funcIdx=meth->index;
   DPRINT("call method %s, localBase=%d\n",meth->name.val.c_str(),cf->localBase);
-  OpBase* entry=getFuncEntry(meth,cf);
+  OpBase* mentry=getFuncEntry(meth,cf);
   ctx.dataPtrs[atLocal]=ctx.dataStack.stack+cf->localBase;
   ctx.dataPtrs[atMember]=obj->obj->members;
   if(meth->localsCount)
@@ -5078,11 +5099,11 @@ void ZorroVM::callMethod(Value* obj,MethodInfo* meth,int argsCount,bool isOverlo
   }
   ctx.dataPtrs[atLocal][argsCount]=*obj;
   obj->refBase->ref();
-  ctx.nextOp=entry;
+  ctx.nextOp=mentry;
 
 }
 
-void ZorroVM::callSomething(Value* func,int argsCount)
+void ZorroVM::callSomething(Value* func,index_type argsCount)
 {
   INITCALL(this,ctx.lastOp,ctx.nextOp,argsCount,false,false,false);
   callOps[func->vt](this,func);
@@ -5112,8 +5133,8 @@ void ZorroVM::rxMatch(Value* l,Value* r,Value* d,OpArg* vars)
   int cs;
   const char* start;
   const char* end;
-  int startOff=0;
-  int endOff=0;
+  size_t startOff=0;
+  size_t endOff=0;
   if(l->vt!=vtString || r->vt!=vtRegExp)
   {
     if(!(l->vt==vtSegment && l->seg->cont.vt==vtString))
@@ -5137,12 +5158,14 @@ void ZorroVM::rxMatch(Value* l,Value* r,Value* d,OpArg* vars)
     sval=&seg.cont;
     s=seg.cont.str;
     cs=s->getCharSize();
-    startOff=seg.segStart;
-    if(startOff<0)startOff=0;
-    if(startOff>=(int)s->getLength())startOff=s->getLength();
-    endOff=seg.segEnd;
+    if(seg.segStart>=0)
+    {
+      startOff = static_cast<size_t>(seg.segStart);
+    }
+    if(startOff>=s->getLength())startOff=s->getLength();
+    endOff=static_cast<size_t>(seg.segEnd);
     if(endOff<startOff)endOff=startOff;
-    if(endOff>(int)s->getLength())endOff=s->getLength();
+    if(endOff>s->getLength())endOff=s->getLength();
     start=s->getDataPtr()+startOff*cs;
     end=s->getDataPtr()+endOff*cs;
   }
@@ -5167,7 +5190,7 @@ void ZorroVM::rxMatch(Value* l,Value* r,Value* d,OpArg* vars)
     arr.vt=vtArray;
     arr.flags=0;
     ZArray& za=*(arr.arr=allocZArray());
-    for(int i=0;i<mi.brCount;++i)
+    for(size_t i=0;i<mi.brCount;++i)
     {
       Value segVal=NilValue;
       if(mi.br[i].start>=0 && mi.br[i].end>=0)
@@ -5185,13 +5208,13 @@ void ZorroVM::rxMatch(Value* l,Value* r,Value* d,OpArg* vars)
     }
     if(vars)
     {
-      int cnt=rxv->val->getNamedBracketsCount();
-      for(int i=0;i<cnt;++i)
+      size_t cnt=rxv->val->getNamedBracketsCount();
+      for(size_t i=0;i<cnt;++i)
       {
         Value* var=&ctx.dataPtrs[vars[i].at][vars[i].idx];
         Value segVal=NilValue;
-        kst::SMatch* br;
-        if((br=mi.hasNamedMatch(rxv->val->getName(i))) && br->start>=0)
+        kst::SMatch* br = mi.hasNamedMatch(rxv->val->getName(i));
+        if(br && br->start>=0)
         {
           segVal.vt=vtSegment;
           segVal.flags=0;

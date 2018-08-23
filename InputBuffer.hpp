@@ -92,9 +92,9 @@ public:
     const char* rv=(const char*)buf;
     while(*buf++)
     {
-      if(++pos>bufSize)throw ReadBeyondEndException((const char*)buf-rv,pos,bufSize);
+      if(++pos>bufSize)throw ReadBeyondEndException(static_cast<size_t>(reinterpret_cast<const char*>(buf)-rv),pos,bufSize);
     }
-    if(++pos>bufSize)throw ReadBeyondEndException((const char*)buf-rv,pos,bufSize);
+    if(++pos>bufSize)throw ReadBeyondEndException(static_cast<size_t>(reinterpret_cast<const char*>(buf)-rv),pos,bufSize);
     return rv;
   }
   const char* skip(size_t bytes)

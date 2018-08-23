@@ -20,6 +20,8 @@ class MemPool{
     T items[N];
     PoolPage():next(0){}
     PoolPage* next;
+    PoolPage(const PoolPage&) = delete;
+    PoolPage& operator=(const PoolPage&) = delete;
   };
   PoolPage* lastPage;
   T* cur,*end;
@@ -180,7 +182,7 @@ public:
   {
     return new Value*[size];
   }
-  void freeVPtrArray(Value** vptr,size_t size)
+  void freeVPtrArray(Value** vptr,size_t /*size*/)
   {
     delete [] vptr;
   }

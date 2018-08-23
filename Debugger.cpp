@@ -6,7 +6,7 @@
 namespace zorro{
 
 namespace{
-bool isInside(int line,int col,const FileLocation& start,const FileLocation& end)
+bool isInside(uint32_t line,uint32_t col,const FileLocation& start,const FileLocation& end)
 {
   return ((line>start.line) || (line==start.line && col>=start.col)) &&
       ((line<end.line)||(line==end.line && col<=end.col));

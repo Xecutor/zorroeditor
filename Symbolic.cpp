@@ -28,7 +28,7 @@ void SymMap::insert(ZStringRef nm,SymInfo* info)
 }
 
 
-void SymMap::clear(ZMemory* mem,SymInfo* parent)
+void SymMap::clear(ZMemory* mem,SymInfo* /*parent*/)
 {
   Iterator it(*this);
   ZString* str;
@@ -164,7 +164,7 @@ SymInfo* SymbolsInfo::getSymbol(Symbol sym)
             {
               currentScope->selfClosed=true;//!!TODO!! fix?
               SymInfo* selfInfo=new SymInfo(mem->mkZString("self"),sytClosedVar);
-              int argsCount=((FuncInfo*)curFunc)->argsCount;
+              size_t argsCount=((FuncInfo*)curFunc)->argsCount;
               OpArg src(atLocal,argsCount);
               ptr->registerClosedSymbol(selfInfo,src);
             }
@@ -357,7 +357,7 @@ void ScopeSymSmartRef::reset(ScopeSym* argRef)
   if(ref)ref->refs.insert(this);
 }
 
-static int exportNs(SymInfo* sym,OutputBuffer& ob,int depth=0)
+static size_t exportNs(SymInfo* sym,OutputBuffer& ob,size_t depth=0)
 {
   if(!sym || sym->st!=sytNamespace)
   {
@@ -370,7 +370,7 @@ static int exportNs(SymInfo* sym,OutputBuffer& ob,int depth=0)
   size_t realDepth=exportNs(sym->getParent(),ob,depth+1);
   if(depth==0)
   {
-    ob.set8(realDepth+1);
+    ob.set8(static_cast<uint8_t>(realDepth+1));
   }
   ob.setCString(sym->name.val.c_str());
   return realDepth;
@@ -391,7 +391,7 @@ void SymbolsInfo::exportApi(OutputBuffer& ob)
         ob.set8(sytFunction);
         exportNs(fi.parent,ob);
         ob.setCString(fi.name.val.c_str());
-        ob.set8(fi.rvtype.ts);
+        ob.set8(static_cast<uint8_t>(fi.rvtype.ts));
         if(fi.rvtype.ts==tsDefined)
         {
           ob.set8(fi.rvtype.vt);
@@ -433,7 +433,7 @@ void SymbolsInfo::exportApi(OutputBuffer& ob)
         {
           case vtInt:
           {
-            ob.set64(v.iValue);
+            ob.set64(static_cast<uint64_t>(v.iValue));
           }break;
           case vtString:
           {
@@ -451,7 +451,7 @@ void SymbolsInfo::exportApi(OutputBuffer& ob)
         ob.setCString(ci.name.val.c_str());
         size_t cpos=ob.getPos();
         ob.set32(0);
-        int cnt=0;
+        uint32_t cnt=0;
         for(auto m:ci.methodsTable)
         {
           if(m->specialMethod)continue;
@@ -513,8 +513,8 @@ void SymbolsInfo::importApi(InputBuffer& ib)
             try{
               currentScope=&global;
               importNs(*this,ib);
-              ZStringRef nm(mem,ib.getCString());
-              SymInfo* sym=currentScope->getSymbols()->findSymbol(nm);
+              ZStringRef nms(mem,ib.getCString());
+              SymInfo* sym=currentScope->getSymbols()->findSymbol(nms);
               if(sym && sym->st==sytClass)
               {
                 fi->rvtype.symRef=(ScopeSym*)sym;
@@ -556,8 +556,8 @@ void SymbolsInfo::importApi(InputBuffer& ib)
         if(si->tinfo.vt==vtObject || si->tinfo.vt==vtNativeObject)
         {
           importNs(*this,ib);
-          ZStringRef nm(mem,ib.getCString());
-          SymInfo* sym=currentScope->symMap.findSymbol(nm);
+          ZStringRef nms(mem,ib.getCString());
+          SymInfo* sym=currentScope->symMap.findSymbol(nms);
           if(sym && sym->st==sytClass)
           {
             si->tinfo.symRef=(ScopeSym*)sym;
@@ -572,14 +572,14 @@ void SymbolsInfo::importApi(InputBuffer& ib)
           {
             SymInfo* sym=new SymInfo(mem->mkZString(ib.getCString()),sytConstant);
             sym->tinfo=TypeInfo(vtInt);
-            int idx=registerScopedGlobal(sym);
-            globals[idx]=IntValue(ib.get64(),true);
+            size_t idx=registerScopedGlobal(sym);
+            globals[idx]=IntValue(static_cast<int64_t>(ib.get64()),true);
           }break;
           case vtString:
           {
             SymInfo* sym = new SymInfo(mem->mkZString(ib.getCString()), sytConstant);
             sym->tinfo=TypeInfo(vtString);
-            int idx = registerScopedGlobal(sym);
+            size_t idx = registerScopedGlobal(sym);
             globals[idx]=StringValue(mem->mkZString(ib.getCString()),true);
           }break;
           default:throw std::runtime_error("importApi: invalid const value type encountered");

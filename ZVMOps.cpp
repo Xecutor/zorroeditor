@@ -133,7 +133,7 @@ static void unimplemented(ZorroVM* vm,OpBase* op)
     cf->retOp=ret;\
     cf->localBase=vm->ctx.dataStack.size()-argsCount;\
     cf->args=argsCount;\
-    cf->funcIdx=0;\
+    cf->funcIdx=0u;\
     cf->selfCall=self;\
     cf->closedCall=false;\
     cf->overload=false
@@ -204,7 +204,17 @@ static void binopFunc(ZorroVM* vm,OpBinOp* op)
 
   if(isLeftTemp){ZUNREF(vm,l);}
   if(isRightTemp){ZUNREF(vm,r);}
-  if((opType==otSetArrayItem || opType==otSetProp || opType==otSetKey) && op->dst.isTemporal){ZUNREF(vm,d);}
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4127)
+#endif
+  if((opType==otSetArrayItem || opType==otSetProp || opType==otSetKey) && op->dst.isTemporal)
+  {
+      ZUNREF(vm,d);
+  }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 }
 
 template <OpType opType,bool isLeftTemp,bool isRightTemp,bool isDstStack>
@@ -772,7 +782,7 @@ OpPostDec::OpPostDec(const OpArg& argSrc,const OpArg& argDst):
 }
 
 
-OpInitArrayItem::OpInitArrayItem(const OpArg& argArr,const OpArg& argItem,int argIndex):
+OpInitArrayItem::OpInitArrayItem(const OpArg& argArr,const OpArg& argItem,size_t argIndex):
     arr(argArr),item(argItem),index(argIndex)
 {
   ot=otInitArrayItem;
@@ -852,7 +862,7 @@ static void OverloadJump(ZorroVM* vm,OpJumpOverloadFallback* op)
   Value src=*vm->ctx.dataStack.stackTop;
   vm->ctx.dataStack.pop();
   bool val;
-  int callLevel=vm->ctx.callStack.size();
+  size_t callLevel=vm->ctx.callStack.size();
   if(src.vt!=vtBool)
   {
     val=vm->boolOps[src.vt](vm,&src);
@@ -937,7 +947,7 @@ OpJumpIfInited::OpJumpIfInited(OpArg argSrc,OpBase* argInitedOp):OpCondJump(argS
 
 static void Jump(ZorroVM* vm,OpJump* op)
 {
-  int inc=vm->ctx.dataStack.size()-vm->ctx.callStack.stackTop->localBase;
+  size_t inc=vm->ctx.dataStack.size()-vm->ctx.callStack.stackTop->localBase;
   if(op->localSize>inc)
   {
     inc=op->localSize-inc;
@@ -945,7 +955,7 @@ static void Jump(ZorroVM* vm,OpJump* op)
   }
 }
 
-OpJump::OpJump(OpBase* argNext,int argLocalSize):localSize(argLocalSize)
+OpJump::OpJump(OpBase* argNext,size_t argLocalSize):localSize(argLocalSize)
 {
   ot=otJump;
   op=(OpFunc)Jump;
@@ -1014,7 +1024,7 @@ static void Return(ZorroVM* vm,OpReturn* op)
   CallFrame* oldFrame=vm->ctx.callStack.stackTop;
   Value* result;
   Value* dst;
-  int targetStack=oldFrame->localBase;
+  size_t targetStack=oldFrame->localBase;
   vm->ctx.nextOp=oldFrame->retOp;
   OpArg oaRes=oldFrame->callerOp->dst;
   bool wasOverload=oldFrame->overload;
@@ -1035,7 +1045,7 @@ static void Return(ZorroVM* vm,OpReturn* op)
     vm->ctx.dataPtrs[atMember]=vm->ctx.dataPtrs[atLocal][newFrame->args].obj->members;
   }
 #ifdef DEBUG
-  int oldStack=vm->ctx.dataStack.size();
+  size_t oldStack=vm->ctx.dataStack.size();
 #endif
 
   Value* target=vm->ctx.dataStack.stack+targetStack-1;
@@ -1093,7 +1103,8 @@ static void Return(ZorroVM* vm,OpReturn* op)
     ++target;
     ZUNREF(vm,target);
   }
-  DPRINT("return (%s->%s) stack %d->%d, lb=%d\n",op->result.toStr().c_str(),oaRes.toStr().c_str(),oldStack,targetStack,newFrame->localBase);
+  DPRINT("return (%s->%s) stack %u->%u, lb=%u\n",op->result.toStr().c_str(),oaRes.toStr().c_str(),
+          static_cast<unsigned int>(oldStack),static_cast<unsigned int>(targetStack),newFrame->localBase);
 }
 
 OpReturn::OpReturn(const OpArg& argResult,bool argRefReturn):result(argResult),refReturn(argRefReturn)
@@ -1287,7 +1298,7 @@ static void Call(ZorroVM* vm,OpCall* op)
   }*/
 }
 
-OpCall::OpCall(int argArgs,const OpArg& argFunc,const OpArg& argResult):
+OpCall::OpCall(index_type argArgs,const OpArg& argFunc,const OpArg& argResult):
   OpCallBase(argArgs,argFunc,argResult)
 {
   ot=otCall;
@@ -1301,7 +1312,7 @@ static void NamedArgsCall(ZorroVM* vm,OpCall* op)
   vm->ncallOps[func->vt](vm,func);
 }
 
-OpNamedArgsCall::OpNamedArgsCall(int argArgs,const OpArg& argFunc,const OpArg& argResult):OpCallBase(argArgs,argFunc,argResult)
+OpNamedArgsCall::OpNamedArgsCall(index_type argArgs,const OpArg& argFunc,const OpArg& argResult):OpCallBase(argArgs,argFunc,argResult)
 {
   ot=otNamedArgsCall;
   op=(OpFunc)NamedArgsCall;
@@ -1645,21 +1656,21 @@ static void InitDtor(ZorroVM* vm,OpInitDtor* op)
 }
 
 
-OpInitDtor::OpInitDtor(int argLocals):locals(argLocals)
+OpInitDtor::OpInitDtor(size_t argLocals):locals(argLocals)
 {
   ot=otInitDtor;
   op=(OpFunc)InitDtor;
 }
 
 
-static void FinalDestroy(ZorroVM* vm,OpFinalDestroy* op)
+static void FinalDestroy(ZorroVM* vm,OpFinalDestroy* /*op*/)
 {
   Value* obj=&vm->ctx.dataStack.stack[vm->ctx.callStack.stackTop->localBase];
   DPRINT("obj=%p, refCount=%d\n",obj->obj,obj->obj->refCount);
   if(obj->obj->refCount==1)
   {
     Object& zo=*obj->obj;
-    for(int i=0;i<zo.classInfo->membersCount;i++)
+    for(size_t i=0;i<zo.classInfo->membersCount;i++)
     {
       ZUNREF(vm,&zo.members[i]);
     }
@@ -1687,7 +1698,7 @@ static void EnterCatch(ZorroVM* vm,OpEnterTry* op)
   vm->ctx.catchStack.push(CatchInfo(op->exList,op->exCount,op->idx,vm->ctx.dataStack.size(),vm->ctx.callStack.size(),op->catchOp));
 }
 
-OpEnterTry::OpEnterTry(ClassInfo** argExList,int argExCount,index_type argIdx,OpBase* argCatchOp):
+OpEnterTry::OpEnterTry(ClassInfo** argExList,index_type argExCount,index_type argIdx,OpBase* argCatchOp):
     exList(argExList),exCount(argExCount),idx(argIdx),catchOp(argCatchOp)
 {
   ot=otEnterTry;
@@ -1707,7 +1718,7 @@ OpEnterTry::~OpEnterTry()
 }
 
 
-static void LeaveCatch(ZorroVM* vm,OpLeaveCatch* op)
+static void LeaveCatch(ZorroVM* vm,OpLeaveCatch* /*op*/)
 {
   vm->ctx.catchStack.pop();
 }
@@ -1773,7 +1784,7 @@ static void MakeClosure(ZorroVM* vm,OpMakeClosure* op)
   ZASSIGN(vm,dst,&res);
 }
 
-OpMakeClosure::OpMakeClosure(OpArg argSrc,OpArg argDst,OpArg argSelf,int argClosedCount,OpArg* argClosedVars):OpDstBase(argDst),
+OpMakeClosure::OpMakeClosure(OpArg argSrc,OpArg argDst,OpArg argSelf,index_type argClosedCount,OpArg* argClosedVars):OpDstBase(argDst),
     src(argSrc),self(argSelf),closedVars(argClosedVars),closedCount(argClosedCount)
 {
   ot=otMakeClosure;
@@ -2030,7 +2041,7 @@ static void Combine(ZorroVM* vm,OpCombine* op)
   {
     return;
   }
-  int len=0;
+  size_t len=0;
   OpArg* arr=op->args;
   OpArg* end=arr+op->count;
   bool hasUnicode=false;
@@ -2077,7 +2088,7 @@ static void Combine(ZorroVM* vm,OpCombine* op)
 }
 
 
-OpCombine::OpCombine(OpArg* argArgs,int argCount,OpArg argDst):args(argArgs),count(argCount),dst(argDst)
+OpCombine::OpCombine(OpArg* argArgs,size_t argCount,OpArg argDst):args(argArgs),count(argCount),dst(argDst)
 {
   ot=otCombine;
   op=(OpFunc)Combine;
@@ -2113,8 +2124,8 @@ static void GetAttr(ZorroVM* vm,OpGetAttr* op)
   {
     ai=&ci->attrs;
   }
-  index_type midx;
-  if(!(midx=ai->hasAttr(op->att.idx)))
+  index_type midx = ai->hasAttr(op->att.idx);
+  if(!midx)
   {
     ZASSIGN(vm,dst,&NilValue);
   }else

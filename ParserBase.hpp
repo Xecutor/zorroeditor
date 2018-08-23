@@ -71,11 +71,13 @@ public:
     static void destroy(void* vptr,char* cptr)
     {
       ((T*)cptr)->~T();
+      (void)vptr;
+      (void)cptr;
     }
     };
     template <class T>
     struct DHelper<T*>{
-    static void destroy(void* vptr,char* cptr)
+    static void destroy(void* vptr,char* /*cptr*/)
     {
       delete (T*)vptr;
     }
@@ -112,7 +114,7 @@ public:
 
     template <class T>
     struct GetHelper{
-      static T& getVal(void* aptr,char* abuf)
+      static T& getVal(void* /*aptr*/,char* abuf)
       {
         return *((T*)abuf);
       }
@@ -120,7 +122,7 @@ public:
 
     template <class T>
     struct GetHelper<T*>{
-      static T*& getVal(void*& aptr,char* abuf)
+      static T*& getVal(void*& aptr,char* /*abuf*/)
       {
         return (T*&)aptr;
       }
@@ -161,7 +163,7 @@ public:
       }
       if(last==dataEnd)
       {
-        size_t oldSz=dataEnd-data;
+        size_t oldSz=static_cast<size_t>(dataEnd-data);
         StackItem* newData=(StackItem*)new char[sizeof(StackItem)*(oldSz+32)];
         memmove(newData,data,oldSz*sizeof(StackItem));
         memset(newData+oldSz,0,sizeof(StackItem)*32);
@@ -191,8 +193,8 @@ public:
       {
         return;
       }
-      int count=(1+(last-data)-sz);
-      for(int i=0;i<count;i++)
+      size_t count=static_cast<size_t>(1+(last-data)-sz);
+      for(size_t i=0;i<count;i++)
       {
         last->destroy();
         last--;
@@ -208,7 +210,7 @@ public:
       {
         return 0;
       }
-      return 1+(last-data);
+      return static_cast<size_t>(1+(last-data));
     }
   };
 
@@ -582,28 +584,28 @@ public:
       DPRINT("preparing %s:%s\n",r.name.c_str(),s.name.c_str());
       if(s.seq.empty())
       {
-        r.emptySeq=idx;
+        r.emptySeq=static_cast<int>(idx);
         continue;
       }
       if((s.binary || r.listMode!=lmNone) && s.seq.size()>=2 && s.seq[1].isTerm  &&
           !s.seq.front().isTerm && s.seq.front().nt->id==r.id)
       {
-        r.binopSeq[s.seq[1].t]=idx;
+        r.binopSeq[s.seq[1].t]=static_cast<int>(idx);
       }
       RuleEntry& e=s.seq.front();
       if(e.isTerm)
       {
         if(r.startTerms[e.t]==-1)
         {
-          r.startTerms[e.t]=idx;
+          r.startTerms[e.t]=static_cast<int>(idx);
           DPRINT("%s is starting with %s\n",s.name.c_str(),Lexer::getTermName(e.t));
         }else
         {
           int aidx=r.startTerms[e.t];
-          Sequence& as=r.seqs[aidx];
+          Sequence& as=r.seqs[static_cast<size_t>(aidx)];
           s.alt=aidx;
           s.compatibleAlt=-1;
-          r.startTerms[e.t]=idx;
+          r.startTerms[e.t]=static_cast<int>(idx);
           for(size_t i=0;i<as.seq.size();++i)
           {
             if(i>=s.seq.size())
@@ -621,7 +623,7 @@ public:
               if(s.seq[i].t!=as.seq[i].t)
               {
                 DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)i);
-                s.compatibleAlt=i;
+                s.compatibleAlt=static_cast<int>(i);
                 break;
               }
               continue;
@@ -629,7 +631,7 @@ public:
             if(s.seq[i].nt!=as.seq[i].nt)
             {
               DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)i);
-              s.compatibleAlt=i;
+              s.compatibleAlt=static_cast<int>(i);
               break;
             }
           }
@@ -648,51 +650,51 @@ public:
             {
               if(r.startTerms[i]==-1)
               {
-                r.startTerms[i]=idx;
+                r.startTerms[i]=static_cast<int>(idx);
               }else
               {
                 int aidx=r.startTerms[i];
-                Sequence& as=r.seqs[aidx];
+                Sequence& as=r.seqs[static_cast<size_t>(aidx)];
                 s.alt=aidx;
                 s.compatibleAlt=-1;
-                r.startTerms[i]=idx;
+                r.startTerms[i]=static_cast<int>(idx);
                 bool fail=false;
                 DPRINT("compare %s and %s\n",s.name.c_str(),as.name.c_str());
-                for(size_t i=0;i<as.seq.size();++i)
+                for(size_t j=0;j<as.seq.size();++j)
                 {
-                  if(i>=s.seq.size())
+                  if(j>=s.seq.size())
                   {
-                    //DPRINT("fail NT1 at %d\n",(int)i);
-                    DPRINT("alt NT1 at %d\n",(int)i);
-                    s.compatibleAlt=i;
+                    //DPRINT("fail NT1 at %d\n",(int)j);
+                    DPRINT("alt NT1 at %d\n",(int)j);
+                    s.compatibleAlt=static_cast<int>(j);
                     break;
                   }
-                  if(s.seq[i].isTerm != as.seq[i].isTerm)
+                  if(s.seq[j].isTerm != as.seq[j].isTerm)
                   {
-                    DPRINT("fail NT2 at %d\n",(int)i);
+                    DPRINT("fail NT2 at %d\n",(int)j);
                     fail=true;
                     break;
                   }
-                  if(s.seq[i].isTerm)
+                  if(s.seq[j].isTerm)
                   {
-                    if(s.seq[i].t!=as.seq[i].t)
+                    if(s.seq[j].t!=as.seq[j].t)
                     {
-                      DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)i);
-                      s.compatibleAlt=i;
+                      DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)j);
+                      s.compatibleAlt=static_cast<int>(j);
                       break;
                     }
                     continue;
                   }
-                  if(s.seq[i].nt!=as.seq[i].nt)
+                  if(s.seq[j].nt!=as.seq[j].nt)
                   {
-                    DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)i);
-                    s.compatibleAlt=i;
+                    DPRINT("marked seq %s as compatible alt of %s at %d\n",s.name.c_str(),as.name.c_str(),(int)j);
+                    s.compatibleAlt=static_cast<int>(j);
                     break;
                   }
                 }
                 if(!fail && s.seq.size()>as.seq.size())
                 {
-                  s.compatibleAlt=s.seq.size();
+                  s.compatibleAlt=static_cast<int>(s.seq.size());
                   DPRINT("alt NT3 at end\n");
                 }
               }
@@ -766,7 +768,7 @@ public:
       }
       if(last==dataEnd)
       {
-        size_t oldSz=dataEnd-data;
+        size_t oldSz=static_cast<size_t>(dataEnd-data);
         CallFrame* newData=new CallFrame[oldSz+32];
         memmove(newData,data,oldSz*sizeof(CallFrame));
         delete [] data;
@@ -797,7 +799,7 @@ public:
     {
       if(last)
       {
-        return last-data+1;
+        return static_cast<size_t>(last-data+1);
       }
       return 0;
     }
@@ -917,11 +919,11 @@ public:
       {
         if(r.emptySeq>=0)
         {
-          DPRINT("match failed, but there is empty rule:%s\n",r.seqs[r.emptySeq].name.c_str());
+          DPRINT("match failed, but there is empty rule:%s\n",r.seqs[static_cast<size_t>(r.emptySeq)].name.c_str());
           rollbackCall();
-          if(r.seqs[r.emptySeq].handler)
+          if(r.seqs[static_cast<size_t>(r.emptySeq)].handler)
           {
-            r.seqs[r.emptySeq].handler->handleRule(stack,&r);
+            r.seqs[static_cast<size_t>(r.emptySeq)].handler->handleRule(stack,&r);
           }
           return true;
         }
@@ -948,14 +950,14 @@ public:
           throw SyntaxErrorException(msg,t.pos);
         }
       }
-      DPRINT("selected seq:%s\n",r.seqs[cf.idx].name.c_str());
-      if(r.seqs[cf.idx].alt!=-1)
+      DPRINT("selected seq:%s\n",r.seqs[static_cast<size_t>(cf.idx)].name.c_str());
+      if(r.seqs[static_cast<size_t>(cf.idx)].alt!=-1)
       {
-        DPRINT("seq have alt %s\n",r.seqs[r.seqs[cf.idx].alt].name.c_str());
+        DPRINT("seq have alt %s\n",r.seqs[static_cast<size_t>(r.seqs[static_cast<size_t>(cf.idx)].alt)].name.c_str());
       }
     }else
     {
-      Sequence& s=r.seqs[cf.idx];
+      Sequence& s=r.seqs[static_cast<size_t>(cf.idx)];
       //return from call, or advance on term rule
       if(cf.failed)
       {
@@ -963,7 +965,7 @@ public:
         {
           if(s.alt!=-1)
           {
-            DPRINT("match of %s failed, switching to alt:%s\n",s.name.c_str(),r.seqs[s.alt].name.c_str());
+            DPRINT("match of %s failed, switching to alt:%s\n",s.name.c_str(),r.seqs[static_cast<size_t>(s.alt)].name.c_str());
             restartCall(s.alt);
             return true;
           }
@@ -975,7 +977,7 @@ public:
           }
           if(cf.pos<(int)s.seq.size())
           {
-            RuleEntry& re=s.seq[cf.pos];
+            RuleEntry& re=s.seq[static_cast<size_t>(cf.pos)];
             if(re.isTerm)
             {
               DPRINT("parsing failed, expected %s\n",Lexer::getTermName(re.t));
@@ -992,7 +994,7 @@ public:
           DPRINT("list rule %s failed, returning\n",r.name.c_str());
           if(r.listMode==lmZeroOrMoreTrail && r.emptySeq>=0 && stack.last && !stack.last->re.isTerm && stack.last->re.nt!=&r)
           {
-            r.seqs[r.emptySeq].handler->handleRule(stack,&r);
+            r.seqs[static_cast<size_t>(r.emptySeq)].handler->handleRule(stack,&r);
           }
           if(r.listMode==lmOneOrMoreTrail || r.listMode==lmZeroOrMoreTrail)
           {
@@ -1005,7 +1007,7 @@ public:
         }
       }
     }
-    Sequence& s=r.seqs[cf.idx];
+    Sequence& s=r.seqs[static_cast<size_t>(cf.idx)];
 
     if((int)s.seq.size()==cf.pos)//sequence fully matched
     {
@@ -1030,9 +1032,9 @@ public:
           CallFrame& pcf=callStack.last[-1];
           Rule* pr=pcf.r;
           //if(pr->id==r.id)
-          if(pr->seqs[pcf.idx].binary)
+          if(pr->seqs[static_cast<size_t>(pcf.idx)].binary)
           {
-            oldPrio=pr->seqs[pcf.idx].prio;
+            oldPrio=pr->seqs[static_cast<size_t>(pcf.idx)].prio;
             DPRINT("old prio=%d\n",oldPrio);
           }
         }
@@ -1058,12 +1060,12 @@ public:
         {
 
           recursion=true;
-          newPrio=r.seqs[nidx].prio;
+          newPrio=r.seqs[static_cast<size_t>(nidx)].prio;
           DPRINT("recursion possible, new prio=%d\n",newPrio);
         }
         if(recursion && cf.canRecurse)
         {
-          if(!(newPrio<oldPrio || (newPrio==oldPrio && r.seqs[nidx].left)))
+          if(!(newPrio<oldPrio || (newPrio==oldPrio && r.seqs[static_cast<size_t>(nidx)].left)))
           {
             DPRINT("recurse loc=%s\n",l.getLoc().backTrace().c_str());
             cf.callLoc=l.getLoc();
@@ -1105,7 +1107,7 @@ public:
                 if(t==ss.seq[1].t)
                 {
                   DPRINT("found %s\n",ss.name.c_str());
-                  cf.idx=idx;
+                  cf.idx=static_cast<int>(idx);
                   cf.pos=1;
                   found=true;
                   break;
@@ -1115,7 +1117,7 @@ public:
                 if(ss.seq[1].nt->getTermSeq(t)!=-1)
                 {
                   DPRINT("found %s\n",ss.name.c_str());
-                  cf.idx=idx;
+                  cf.idx=static_cast<int>(idx);
                   cf.pos=1;
                   found=true;
                   break;
@@ -1135,9 +1137,9 @@ public:
       return false;//return to previous frame
     }
 
-    if(s.seq[cf.pos].isTerm)
+    if(s.seq[static_cast<size_t>(cf.pos)].isTerm)
     {
-      if(t==s.seq[cf.pos].t)
+      if(t==s.seq[static_cast<size_t>(cf.pos)].t)
       {
         if(cf.pos==0)
         {
@@ -1145,16 +1147,16 @@ public:
         }
         DPRINT("match term:%s\n",Lexer::getTermName(t));
         lastOkMatch=l.getNext();
-        if(s.seq[cf.pos].isOptional)
+        if(s.seq[static_cast<size_t>(cf.pos)].isOptional)
         {
           DPRINT("skipped optional:%s\n",Lexer::getTermName(t));
           return true;
         }
-        if(s.seq[cf.pos].isPushed)
+        if(s.seq[static_cast<size_t>(cf.pos)].isPushed)
         {
-          stack.push_back(t,s.seq[cf.pos]);
+          stack.push_back(t,s.seq[static_cast<size_t>(cf.pos)]);
         }
-        cf.pointOfNoReturn=cf.pointOfNoReturn || s.seq[cf.pos].isPointOfNoReturn;
+        cf.pointOfNoReturn=cf.pointOfNoReturn || s.seq[static_cast<size_t>(cf.pos)].isPointOfNoReturn;
         cf.pos++;
         if(cf.pos==(int)s.seq.size())
         {
@@ -1163,7 +1165,7 @@ public:
         return true;
       }else
       {
-        if(s.seq[cf.pos].isOptional)
+        if(s.seq[static_cast<size_t>(cf.pos)].isOptional)
         {
           cf.pos++;
           return false;
@@ -1174,7 +1176,7 @@ public:
         }
         if(s.alt!=-1)
         {
-          DPRINT("match of %s failed, switching to alt:%s\n",s.name.c_str(),r.seqs[s.alt].name.c_str());
+          DPRINT("match of %s failed, switching to alt:%s\n",s.name.c_str(),r.seqs[static_cast<size_t>(s.alt)].name.c_str());
           if(s.compatibleAlt==cf.pos)
           {
             DPRINT("alt is at compatible position, switching without frame restart\n");
@@ -1212,7 +1214,8 @@ public:
     {
 
       int pos=cf.pos++;
-      mkCall(s.seq[pos].nt,s.seq[pos].isPrioReset,cf.returnOnError || s.seq[pos].isReturnOnError,false/*cf.pointOfNoReturn || s.seq[pos].isPointOfNoReturn*/);
+      mkCall(s.seq[static_cast<size_t>(pos)].nt,s.seq[static_cast<size_t>(pos)].isPrioReset,
+              cf.returnOnError || s.seq[static_cast<size_t>(pos)].isReturnOnError,false/*cf.pointOfNoReturn || s.seq[pos].isPointOfNoReturn*/);
     }
     return false;
   }

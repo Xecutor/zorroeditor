@@ -107,7 +107,7 @@ enum OpType{
   otGetAttr
 };
 
-enum OpArgType{
+enum OpArgType:uint8_t{
   atNul,
   atGlobal,
   atLocal,
@@ -154,7 +154,7 @@ struct OpArg{
   }
 };
 
-inline void customformat(kst::FormatBuffer& buf,const OpArg& oa,int p,int w)
+inline void customformat(kst::FormatBuffer& buf,const OpArg& oa,int,int)
 {
   const std::string& tmp=oa.toStr();
   buf.Append(tmp.c_str(),tmp.length());

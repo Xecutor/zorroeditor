@@ -179,8 +179,8 @@ struct OpMakeMemberRef:OpDstBase{
 
 struct OpInitArrayItem:OpBase{
   OpArg arr,item;
-  int index;
-  OpInitArrayItem(const OpArg& argArr,const OpArg& argItem,int argIndex);
+  size_t index;
+  OpInitArrayItem(const OpArg& argArr,const OpArg& argItem,size_t argIndex);
   virtual ~OpInitArrayItem(){}
   void getArgs(ArgsVector& args)
   {
@@ -195,7 +195,7 @@ struct OpInitArrayItem:OpBase{
     out+=" -> ";
     out+=arr.toStr();
     char buf[32];
-    snprintf(buf, sizeof(buf), "[%d]",index);
+    snprintf(buf, sizeof(buf), "[%u]",static_cast<unsigned int>(index));
     out+=buf;
   }
 };
@@ -273,13 +273,14 @@ struct OpMakeRange:OpBase{
 };
 
 struct OpJump:OpBase{
-  int localSize;
-  OpJump(OpBase* argNext,int argLocalSize);
+  size_t localSize;
+  OpJump(OpBase* argNext,size_t argLocalSize);
   virtual ~OpJump(){}
   void dump(std::string& out)
   {
     char buf[256];
-    snprintf(buf, sizeof(buf), "jump(%d):%s",localSize,next?next->pos.backTrace().c_str():"null");
+    snprintf(buf, sizeof(buf), "jump(%u):%s",
+             static_cast<unsigned int>(localSize),next?next->pos.backTrace().c_str():"null");
     out=buf;
   }
 };
@@ -296,7 +297,9 @@ struct OpJumpOverloadFallback:OpDstBase{
 struct OpJumpBase:OpBase{
   OpBase* elseOp;
   OpJumpOverloadFallback fallback;
-  OpJumpBase(OpBase* argElseOp):elseOp(argElseOp),fallback(this){}
+  OpJumpBase(OpBase* argElseOp):elseOp(argElseOp),fallback(nullptr){
+    fallback.owner = this;
+  }
   virtual void getBranches(OpsVector& branches)
   {
     branches.push_back(elseOp);
@@ -394,16 +397,16 @@ DEFBINOPJUMP(Is);
 
 struct OpCallBase:OpDstBase{
   OpArg func;
-  int args;
+  index_type args;
   void getArgs(ArgsVector& argsv)
   {
     argsv.push_back(&func);
   }
-  OpCallBase(int argArgs,const OpArg& argFunc,const OpArg& argResult):OpDstBase(argResult),func(argFunc),args(argArgs){}
+  OpCallBase(index_type argArgs,const OpArg& argFunc,const OpArg& argResult):OpDstBase(argResult),func(argFunc),args(argArgs){}
 };
 
 struct OpCall:OpCallBase{
-  OpCall(int argArgs,const OpArg& argFunc,const OpArg& argResult);
+  OpCall(index_type argArgs,const OpArg& argFunc,const OpArg& argResult);
   virtual ~OpCall(){}
 
   void dump(std::string& out)
@@ -415,7 +418,7 @@ struct OpCall:OpCallBase{
 };
 
 struct OpNamedArgsCall:OpCallBase{
-  OpNamedArgsCall(int argArgs,const OpArg& argFunc,const OpArg& argResult);
+  OpNamedArgsCall(index_type argArgs,const OpArg& argFunc,const OpArg& argResult);
   virtual ~OpNamedArgsCall(){}
   void dump(std::string& out)
   {
@@ -552,8 +555,8 @@ struct OpForStep2:OpForStep{
 };
 
 struct OpInitDtor:OpBase{
-  int locals;
-  OpInitDtor(int argLocals);
+  size_t locals;
+  OpInitDtor(size_t argLocals);
   void dump(std::string& out)
   {
     out="initDtor";
@@ -572,10 +575,10 @@ struct ClassInfo;
 
 struct OpEnterTry:OpBase{
   ClassInfo** exList;
-  int exCount;
+  index_type exCount;
   index_type idx;
   OpBase* catchOp;
-  OpEnterTry(ClassInfo** argExList,int argExCount,index_type argIdx,OpBase* argCatchOp);
+  OpEnterTry(ClassInfo** argExList,index_type argExCount,index_type argIdx,OpBase* argCatchOp);
   ~OpEnterTry();
   virtual void getBranches(OpsVector& branches)
   {
@@ -613,8 +616,8 @@ struct OpMakeClosure:OpDstBase{
   OpArg src;
   OpArg self;
   OpArg* closedVars;
-  int closedCount;
-  OpMakeClosure(OpArg argSrc,OpArg argDst,OpArg argSelf,int argClosedCount,OpArg* argClosedVars);
+  index_type closedCount;
+  OpMakeClosure(OpArg argSrc,OpArg argDst,OpArg argSelf,index_type argClosedCount,OpArg* argClosedVars);
   void getArgs(ArgsVector& args)
   {
     args.push_back(&src);
@@ -737,16 +740,18 @@ struct OpFormat:OpDstBase{
 
 struct OpCombine:OpBase{
   OpArg* args;
-  int count;
+  size_t count;
   OpArg dst;
-  OpCombine(OpArg* argArgs,int argCount,OpArg argDst);
+  OpCombine(OpArg* argArgs,size_t argCount,OpArg argDst);
+  OpCombine(const OpCombine&) = delete;
+  OpCombine& operator=(const OpCombine&) = delete;
   ~OpCombine()
   {
     delete [] args;
   }
   void getArgs(ArgsVector& argsv)
   {
-    for(int i=0;i<count;i++)
+    for(size_t i=0;i<count;i++)
     {
       argsv.push_back(this->args+i);
     }
@@ -754,7 +759,7 @@ struct OpCombine:OpBase{
   void dump(std::string& out)
   {
     out="combine ";
-    for(int i=0;i<count;i++)
+    for(size_t i=0;i<count;i++)
     {
       if(i!=0)out+=",";
       out+=args[i].toStr();

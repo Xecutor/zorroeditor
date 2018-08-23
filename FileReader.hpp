@@ -109,7 +109,7 @@ public:
           e->id=++idSeq;
           e->name=fileName;
           fseek(f,0,SEEK_END);
-          size_t size=ftell(f);
+          size_t size=static_cast<size_t>(ftell(f));
           fseek(f,0,SEEK_SET);
           e->data.resize(size);
           fread(&e->data[0],size,1,f);
@@ -231,7 +231,7 @@ public:
   {
     eoln=0;
     if(isEof())return false;
-    int startOff=loc.offset;
+    uint32_t startOff=loc.offset;
     while(loc.offset<size && buf[loc.offset]!=0x0a && buf[loc.offset]!=0x0d)
     {
       ++loc.offset;
@@ -387,7 +387,7 @@ inline std::string FileLocation::backTrace()const
   return result;
 }
 
-inline void customformat(kst::FormatBuffer& buf,const FileLocation& pos,int w,int p)
+inline void customformat(kst::FormatBuffer& buf,const FileLocation& pos,int,int)
 {
   const std::string& bt=pos.backTrace();
   buf.Append(bt.c_str(),bt.length());

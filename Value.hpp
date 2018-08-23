@@ -18,7 +18,7 @@ namespace kst{
 
 namespace zorro{
 
-enum ValueType{
+enum ValueType : uint8_t{
   vtNil,         //0
   vtBool,        //1
   vtInt,         //2
@@ -55,10 +55,10 @@ enum ValueType{
 
 #define ZISREFTYPE(val) ((val)->vt>=vtRefTypeBase)
 
-const unsigned char ValFlagConst=1;
-const unsigned char ValFlagLvalue=2;
-const unsigned char ValFlagARef=4;
-const unsigned char ValFlagInited=8;
+const unsigned char ValFlagConst=1u;
+const unsigned char ValFlagLvalue=2u;
+const unsigned char ValFlagARef=4u;
+const unsigned char ValFlagInited=8u;
 
 struct ValueRef;
 struct WeakRef;
@@ -117,7 +117,7 @@ struct Value{
     Coroutine* cor;
     ForIterator* iter;
     RegExpVal* regexp;
-    int idx;
+    uint32_t idx;
     int64_t iValue;
     double dValue;
     bool bValue;
@@ -158,7 +158,7 @@ struct MemberRef:RefBase{
   Value obj;
   ZString* name;
   Value getValue;
-  int memberIndex;
+  size_t memberIndex;
   bool simpleMember;
 };
 
@@ -199,15 +199,15 @@ struct Closure:RefBase{
   Value* closedValues;
   FuncInfo* func;
   Value self;
-  int closedCount;
+  size_t closedCount;
 };
 
 struct RegExpVal:RefBase{
   kst::RegExp* val;
   kst::SMatch* marr;
-  int marrSize;
+  size_t marrSize;
   kst::NamedMatch* narr;
-  int narrSize;
+  size_t narrSize;
 };
 
 static const Value NilValue={0,0,0,{0}};
@@ -217,7 +217,7 @@ inline Value IntValue(int64_t value,bool isConst=false)
   Value rv;
   rv.vt=vtInt;
   rv.iValue=value;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -226,7 +226,7 @@ inline Value DoubleValue(double value,bool isConst=false)
   Value rv;
   rv.vt=vtDouble;
   rv.dValue=value;
-  rv.flags=isConst?ValFlagConst:0;
+  rv.flags=isConst?ValFlagConst:0u;
   return rv;
 }
 
@@ -235,7 +235,7 @@ inline Value BoolValue(bool val)
   Value rv;
   rv.vt=vtBool;
   rv.bValue=val;
-  rv.flags=0;
+  rv.flags=0u;
   return rv;
 }
 
@@ -250,7 +250,7 @@ Value KeyRefValue(KeyRef* prop,bool isConst=false);
 Value NObjValue(ZorroVM* vm,ClassInfo* cls,void* ptr);
 
 
-inline Value LvalueRefValue(int idx,unsigned char atLvalue)
+inline Value LvalueRefValue(uint32_t idx,unsigned char atLvalue)
 {
   Value rv;
   rv.vt=vtLvalue;

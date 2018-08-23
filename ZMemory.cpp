@@ -257,11 +257,11 @@ ZStringRef ZMemory::mkZString(const char* str,size_t len)
   {
     uint32_t ulen=ZString::calcU8Symbols(str,len);
     char* buf=allocStr(ulen*2);
-    char* ptr=buf;
-    const char* end=str+len;
-    while(str<end)
+    char* bptr=buf;
+    const char* send=str+len;
+    while(str<send)
     {
-      ZString::utf8ToUcs2(str,ptr);
+      ZString::utf8ToUcs2(str,bptr);
     }
     ZString* zs=allocZString();
     zs->init(buf,ulen*2,true);
@@ -303,7 +303,7 @@ ZStringRef ZMemory::mkZString(const uint16_t* str,size_t len)
     char* dst=astr;
     while(ptr<end)
     {
-      *dst=*ptr;
+      *dst=static_cast<char>(*ptr);
       ++ptr;++dst;
     }
     *dst=0;

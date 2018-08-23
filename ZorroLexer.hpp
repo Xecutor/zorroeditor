@@ -149,9 +149,9 @@ struct ZLexer:LexerBase<ZLexer,TermType>{
 
   bool cmp(Term& t,const char* str)
   {
-    int len=0;
+    unsigned int len=0;
     const char* val=t.getValue(len);
-    int i=0;
+    unsigned i=0;
     while(i<len && val[i]==str[i])
     {
       i++;

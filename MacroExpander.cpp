@@ -98,8 +98,8 @@ void ZMacroExpander::expandMacro()
 void ZMacroExpander::registerMacro(const Term& name,FuncParamList* params,StmtList* body)
 {
   CodeGenerator cg(vm);
-  std::auto_ptr<FuncParamList> paramsGuard(params);
-  std::auto_ptr<StmtList> bodyGuard(body);
+  std::unique_ptr<FuncParamList> paramsGuard(params);
+  std::unique_ptr<StmtList> bodyGuard(body);
   try{
     cg.generateMacro(p->getValue(name),params,body);
   }catch(...)

@@ -60,14 +60,14 @@ struct Symbol{
   }
 };
 
-inline void customformat(kst::FormatBuffer& buf,const zorro::Name& name,int w,int p)
+inline void customformat(kst::FormatBuffer& buf,const zorro::Name& name,int,int)
 {
   CStringWrap wrap(0,0,0);
   name.val.c_str(wrap);
   buf.Append(wrap.c_str(),wrap.getLength());
 }
 
-inline void customformat(kst::FormatBuffer& buf,const zorro::Symbol& sym,int w,int p)
+inline void customformat(kst::FormatBuffer& buf,const zorro::Symbol& sym,int,int)
 {
   const std::string& str=sym.toString();
   buf.Append(str.c_str(),str.length());

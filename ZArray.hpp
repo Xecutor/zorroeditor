@@ -252,12 +252,12 @@ struct ZArray:RefBase{
     {
       if(idx+count>lastPageCount)
       {
-        lastPageCount=idx;
+        lastPageCount=static_cast<uint16_t>(idx);
         itemsCount=idx;
         return;
       }
       memmove(page+idx,page+idx+count,sizeof(Value)*(lastPageCount-idx-count));
-      lastPageCount-=count;
+      lastPageCount-=static_cast<uint16_t>(count);
       itemsCount-=count;
     }else
     {
@@ -420,7 +420,7 @@ struct ZArray:RefBase{
         {
           page[i]=NilValue();
         }*/
-        lastPageCount=argSize;
+        lastPageCount=static_cast<uint16_t>(argSize);
         return;
       }
       if(lastPageSize==0)
@@ -428,14 +428,14 @@ struct ZArray:RefBase{
         if(argSize<pageSize)
         {
           size_t m=argSize%firstPageIncrement;
-          lastPageSize=argSize+(m?firstPageIncrement-m:0);
+          lastPageSize=static_cast<uint16_t>(argSize+(m?firstPageIncrement-m:0));
           page=mem->allocVArray(lastPageSize);
           memset(page,0,sizeof(Value)*argSize);
           /*for(size_t i=0;i<argSize;++i)
           {
             page[i]=NilValue();
           }*/
-          lastPageCount=argSize;
+          lastPageCount=static_cast<uint16_t>(argSize);
           return;
         }else
         {
@@ -477,7 +477,7 @@ struct ZArray:RefBase{
       Value* newPage=mem->allocVArray(newSize);
       memcpy(newPage,page,sizeof(Value)*lastPageCount);
       mem->freeVArray(page,lastPageSize);
-      lastPageSize=newSize;
+      lastPageSize=static_cast<uint16_t>(newSize);
       page=newPage;
       if(argSize<=pageSize)
       {
@@ -487,7 +487,7 @@ struct ZArray:RefBase{
         {
           page[i]=NilValue();
         }*/
-        lastPageCount=argSize;
+        lastPageCount=static_cast<uint16_t>(argSize);
         return;
       }else
       {
@@ -528,7 +528,7 @@ struct ZArray:RefBase{
       {
         lastPage[i]=NilValue();
       }*/
-      lastPageCount=endIdx;
+      lastPageCount=static_cast<uint16_t>(endIdx);
       return;
     }
     memset(lastPage+lastPageCount,0,sizeof(Value)*(pageSize-lastPageCount));
@@ -567,7 +567,7 @@ struct ZArray:RefBase{
       lastPage[i]=NilValue();
     }
     */
-    lastPageCount=argSize;
+    lastPageCount=static_cast<uint16_t>(argSize);
     lastPageSize=pageSize;
   }
   ZArray* copy()

@@ -55,7 +55,7 @@ public:
         att=0;
       }
     }
-    return arr[0].value;//make compiler happy
+    //return arr[0].value;//make compiler happy
   }
   V* getPtr(const ZString* argKey)const
   {
@@ -183,6 +183,7 @@ public:
     {
       index=(uint32_t)-1;
     }
+    Iterator(const Iterator&)=delete;
     bool getNext(ZString*& key,V*& val)
     {
       do{
@@ -198,6 +199,7 @@ public:
         return false;
       }
     }
+    Iterator& operator=(const Iterator&) = delete;
   protected:
     ZHash& hash;
     uint32_t index;

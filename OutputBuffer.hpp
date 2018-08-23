@@ -74,16 +74,16 @@ public:
   void set16( uint16_t val)
   {
     checkSize(2);
-    buf[pos++]=val>>8;
-    buf[pos++]=val&0xff;
+    buf[pos++]=static_cast<uint8_t>(val>>8);
+    buf[pos++]=static_cast<uint8_t>(val&0xff);
   }
   void set32( uint32_t val)
   {
     checkSize(4);
-    buf[pos++]=(val>>24)&0xff;
-    buf[pos++]=(val>>16)&0xff;
-    buf[pos++]=(val>>8)&0xff;
-    buf[pos++]=val&0xff;
+    buf[pos++]=static_cast<uint8_t>((val>>24)&0xff);
+    buf[pos++]=static_cast<uint8_t>((val>>16)&0xff);
+    buf[pos++]=static_cast<uint8_t>((val>>8)&0xff);
+    buf[pos++]=static_cast<uint8_t>(val&0xff);
   }
   void set64( uint64_t val)
   {
@@ -131,7 +131,7 @@ protected:
   uint8_t* buf;
   size_t bufSize;
   size_t pos;
-  enum{
+  enum : uint8_t{
     bmOwned,
     bmExternalInitial,
     bmExternalFixed
@@ -146,6 +146,7 @@ struct TempRewind{
   {
     ob.setPos(pos);
   }
+  TempRewind& operator=(const TempRewind&) = delete;
   ~TempRewind()
   {
     ob.setPos(savedPos);

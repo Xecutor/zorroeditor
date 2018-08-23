@@ -242,7 +242,10 @@ ZLexer::ZLexer():macroExpander(0)
   for(char c='0';c<='9';c++)reg(c,tInt,&ZLexer::matchNumber);
   for(char c='a';c<='z';c++)reg(c,tIdent,&ZLexer::matchIdent);
   for(char c='A';c<='Z';c++)reg(c,tIdent,&ZLexer::matchIdent);
-  for(unsigned int c=128;c<=255;c++)reg(c,tIdent,&ZLexer::matchUIdent);
+  for(unsigned int c=128;c<=255;c++)
+  {
+    reg(static_cast<char>(c),tIdent,&ZLexer::matchUIdent);
+  }
   reg('_',tIdent,&ZLexer::matchIdent);
   reg("//",&ZLexer::matchLineComment);
   reg("/*",&ZLexer::matchMLComment);
@@ -358,7 +361,7 @@ void ZLexer::matchUIdent()
       last.length=saveLength;
     }
   }
-  int len;
+  unsigned int len;
   const char* ptr=last.getValue(len);
   TermType* tt=idents.getPtr(ptr,len);
   if(tt)
@@ -398,7 +401,7 @@ void ZLexer::matchIdent()
       last.length=saveLength;
     }
   }
-  int len;
+  unsigned int len;
   const char* ptr=last.getValue(len);
   TermType* tt=idents.getPtr(ptr,len);
   if(tt)
@@ -438,7 +441,7 @@ void ZLexer::matchDollar()
     }
   }
   FileLocation saved=fr->getLoc();
-  int savedLength=last.length;
+  unsigned int savedLength=last.length;
   while((c=fr->peek())=='l' || c=='r' || c=='x' || c=='X' || c=='z' )
   {
     fr->getNextChar();

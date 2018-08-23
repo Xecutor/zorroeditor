@@ -20,7 +20,7 @@ protected:
 
   struct StepCondition{
     FileLocation start,end;
-    int depthLevel;
+    size_t depthLevel;
     bool stepInto;
     bool operator()(ZorroVM* vm);
   };

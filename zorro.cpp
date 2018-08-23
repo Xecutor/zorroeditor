@@ -61,7 +61,7 @@ static void z_sqrt(ZorroVM* vm)
     val=v->dValue;
   }else if(v->vt==vtInt)
   {
-    val=v->iValue;
+    val=static_cast<double>(v->iValue);
   }else
   {
     throw std::runtime_error("sqrt:invalid argument type");
@@ -80,7 +80,7 @@ double valueAsNumber(const Value& v)
     return v.dValue;
   }else if(v.vt==vtInt)
   {
-    return v.iValue;
+    return static_cast<double>(v.iValue);
   }else
   {
     throw std::runtime_error("values is not numeric");
@@ -136,7 +136,7 @@ static void z_irandom(ZorroVM* vm)
   }while(r==RAND_MAX);
   double v=r;
   v/=RAND_MAX;
-  vm->setResult(IntValue(mn+mx*v));
+  vm->setResult(IntValue(static_cast<int64_t>(mn+mx*v)));
 }
 
 static void print(ZorroVM* vm)
@@ -238,7 +238,7 @@ static void ctxtest(ZorroVM* vm)
   MyContext& c=vm->ctx.dataStack.stackTop->nobj->as<MyContext>();
   if(!first)
   {
-    c.sum+=valueAsNumber(rv);
+    c.sum+=static_cast<int>(valueAsNumber(rv));
   }
   if(c.val==10)
   {
@@ -334,7 +334,7 @@ static void TestClassSetVal(ZorroVM* vm,Value* obj)
   Value& val=vm->getLocalValue(0);
   if(val.vt==vtInt)
   {
-    obj->nobj->as<TestClass>().val=val.iValue;
+    obj->nobj->as<TestClass>().val=static_cast<int>(val.iValue);
   }
 }
 static void TestClassAdd(ZorroVM* vm,Value* obj)
@@ -343,7 +343,9 @@ static void TestClassAdd(ZorroVM* vm,Value* obj)
   {
     return;
   }
-  int rv=obj->nobj->as<TestClass>().add(valueAsNumber(vm->getLocalValue(0)),valueAsNumber(vm->getLocalValue(1)));
+  int rv=obj->nobj->as<TestClass>().add(
+          static_cast<int>(valueAsNumber(vm->getLocalValue(0))),
+          static_cast<int>(valueAsNumber(vm->getLocalValue(1))));
   vm->setResult(IntValue(rv));
 }
 
@@ -406,7 +408,7 @@ std::string dumpTypeInfo(TypeInfo& ti)
 
 static void ShowTypeInfo(ZorroVM* vm)
 {
-  for(int i=0;i<vm->getArgsCount();++i)
+  for(size_t i=0;i<vm->getArgsCount();++i)
   {
     Value& v=vm->getLocalValue(i);
     if(v.vt!=vtString)
@@ -441,7 +443,7 @@ int main(int argc,char* argv[])
   //printf("sizeof=%d(sym=%d, ctx=%d)\n",(int)sizeof(vm),(int)sizeof(vm.symbols),(int)sizeof(vm.ctx));
   try{
 
-    srand(time(0));
+    srand(static_cast<unsigned int>(time(0)));
     srand(rand());
     ZBuilder zb(&vm);
     zb.enterNamespace("math");

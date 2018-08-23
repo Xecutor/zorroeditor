@@ -241,11 +241,12 @@ struct TypeInfo{
     {
       return self.ts==tsOneOf?self.arr[idx]:self;
     }
+    iterator& operator=(const iterator&)=delete;
   };
   struct const_iterator:base_iterator{
     const TypeInfo& self;
     const_iterator(size_t argIdx,const TypeInfo& argSelf):base_iterator(argIdx),self(argSelf){}
-    const_iterator(const iterator& other):base_iterator(other.idx),self(other.self){}
+    const_iterator(const const_iterator& other):base_iterator(other.idx),self(other.self){}
     const TypeInfo* operator->()const
     {
       return self.ts==tsOneOf?&self.arr[idx]:&self;
@@ -254,6 +255,8 @@ struct TypeInfo{
     {
       return self.ts==tsOneOf?self.arr[idx]:self;
     }
+    iterator& operator=(const const_iterator&)=delete;
+    iterator& operator=(const_iterator&&)=delete;
   };
   iterator begin()
   {
@@ -276,12 +279,13 @@ struct TypeInfo{
 struct SymInfo:RefBase{
   SymbolType st;
   bool closed;
-  int index;
+  static const size_t invalidIndexValue = static_cast<size_t>(-1);
+  size_t index;
   Name name;
   SymInfo* replacedSymbol;
   ExtraInfo* extra;
   TypeInfo tinfo;
-  SymInfo(Name argName,SymbolType argSt):st(argSt),closed(false),index(-1),name(argName),replacedSymbol(0),extra(0){}
+  SymInfo(Name argName,SymbolType argSt):st(argSt),closed(false),index(invalidIndexValue),name(argName),replacedSymbol(0),extra(0){}
   virtual ~SymInfo()
   {
     if(extra)delete extra;
@@ -318,13 +322,14 @@ struct LiterInfo;
 
 struct ScopeSym:SymInfo{
   ScopeSym(Name argName,SymbolType argSt,ScopeSym* argParent,SymbolsInfo* argSi);
+  ScopeSym(const ScopeSym&)=delete;
   ~ScopeSym()
   {
     symMap.clear(mem,this);
     attrMap.clear(mem,this);
-    for(std::list<SymInfo*>::iterator it=tempSymbols.begin(),end=tempSymbols.end();it!=end;++it)
+    for(auto ptr:tempSymbols)
     {
-      delete *it;
+      delete ptr;
     }
     ZString* key;
     LiterList** lst;
@@ -334,11 +339,13 @@ struct ScopeSym:SymInfo{
       if(key->unref())mem->freeZString(key);
       delete *lst;
     }
-    for(std::set<ScopeSymSmartRef*>::iterator it=refs.begin(),end=refs.end();it!=end;++it)
+    for(auto& ptr : refs)
     {
-      (*it)->ref=0;
+      ptr->ref=nullptr;
     }
   }
+
+  ScopeSym& operator=(const ScopeSym&)=delete;
 
   FileLocation end;
 
@@ -362,7 +369,7 @@ struct ScopeSym:SymInfo{
   ClosedFuncVector closedFuncs;
   std::list<SymInfo*> freeTemporals;
   std::list<SymInfo*> tempSymbols;
-  std::map<int,SymInfo*> acquiredTemporals;
+  std::map<size_t,SymInfo*> acquiredTemporals;
   std::list<ScopeSym*> usedNs;
   SymbolsInfo* si;
   ZMemory* mem;
@@ -378,11 +385,11 @@ struct ScopeSym:SymInfo{
 
   bool hasClosedFuncStorage(index_type gidx,index_type& lidx)
   {
-    for(ClosedFuncVector::iterator it=closedFuncs.begin(),end=closedFuncs.end();it!=end;++it)
+    for(auto& cv : closedFuncs)
     {
-      if(it->src.idx==gidx)
+      if(cv.src.idx==gidx)
       {
-        lidx=it->dst.idx;
+        lidx=cv.dst.idx;
         return true;
       }
     }
@@ -402,7 +409,7 @@ struct ScopeSym:SymInfo{
   }
 
 
-  int acquireTemporal()
+  size_t acquireTemporal()
   {
     SymInfo* tmp;
     if(!freeTemporals.empty())
@@ -411,7 +418,7 @@ struct ScopeSym:SymInfo{
       freeTemporals.pop_back();
     }else
     {
-      int rindex;
+      size_t rindex;
       if(st==sytGlobalScope)
       {
         rindex=acquiredTemporals.size();
@@ -421,7 +428,7 @@ struct ScopeSym:SymInfo{
       }
 
       char rname[32];
-      snprintf(rname, sizeof(rname), "temp-%d",rindex);
+      snprintf(rname, sizeof(rname), "temp-%u",static_cast<unsigned>(rindex));
       ZStringRef nm(mem,mem->allocZString(rname));
       tmp=new SymInfo(Name(nm,FileLocation()),sytTemporal);
       symMap.insert(nm,tmp);
@@ -430,9 +437,9 @@ struct ScopeSym:SymInfo{
     acquiredTemporals[tmp->index]=tmp;
     return tmp->index;
   }
-  void releaseTemporal(int argIndex)
+  void releaseTemporal(size_t argIndex)
   {
-    std::map<int,SymInfo*>::iterator it=acquiredTemporals.find(argIndex);
+    auto it=acquiredTemporals.find(argIndex);
     if(it==acquiredTemporals.end())
     {
       abort();
@@ -441,7 +448,7 @@ struct ScopeSym:SymInfo{
     acquiredTemporals.erase(it);
   }
 
-  int registerClosedSymbol(SymInfo* infoPtr,OpArg srcVar)
+  size_t registerClosedSymbol(SymInfo* infoPtr,OpArg srcVar)
   {
     infoPtr->index=closedVars.size();
     closedVars.push_back(srcVar);
@@ -478,6 +485,10 @@ struct GlobalScope:ScopeSym{
   GlobalScope(SymbolsInfo* argSi):ScopeSym(Name(),sytGlobalScope,0,argSi)
   {
   }
+  GlobalScope(const GlobalScope&)=delete;
+  GlobalScope(GlobalScope&&)=delete;
+  GlobalScope& operator=(GlobalScope&&)=delete;
+  GlobalScope& operator=(const GlobalScope&)=delete;
   void clear();
   void clearGlobals();
 };
@@ -487,6 +498,10 @@ struct FuncInfo:ScopeSym{
       cfunc(0),entry(0),varArgEntry(0),namedArgEntry(0),varArgEntryLast(0),argsCount(0),localsCount(0),def(0),inTypeFill(false),namedArgs(false)
   {
   }
+
+  FuncInfo(const FuncInfo&)=delete;
+  FuncInfo& operator=(const FuncInfo&)=delete;
+
   ~FuncInfo()
   {
     if(!defValEntries.empty())
@@ -521,6 +536,13 @@ struct LiterInfo:FuncInfo{
   LiterInfo(Name argName,ScopeSym* argParent,SymbolsInfo* argSi):FuncInfo(argName,argParent,argSi)
   {
   }
+
+  LiterInfo(const LiterInfo&) = delete;
+  LiterInfo(LiterInfo&&) = delete;
+
+  LiterInfo& operator=(const LiterInfo&) = delete;
+  LiterInfo& operator=(LiterInfo&&) = delete;
+
   typedef std::list<LiterArg> ArgList;
   ArgList markers;
 };
@@ -530,7 +552,7 @@ struct ClassInfo;
 
 struct MethodInfo:FuncInfo{
   MethodInfo(Name argName,ScopeSym* argParent,ClassInfo* argClass,SymbolsInfo* argSi):FuncInfo(argName,argParent,argSi),
-      cmethod(0),owningClass(argClass),lastOp(0),localIndex(-1),overIndex(-1),specialMethod(false)
+      owningClass(argClass)
   {
     st=sytMethod;
   }
@@ -538,15 +560,21 @@ struct MethodInfo:FuncInfo{
   {
     if(lastOp)
     {
-      lastOp->next=0;
+      lastOp->next=nullptr;
     }
   }
-  ZorroCMethod cmethod;
+  MethodInfo(const MethodInfo&) = delete;
+  MethodInfo(MethodInfo&&) = delete;
+
+  MethodInfo& operator=(const MethodInfo&) = delete;
+  MethodInfo& operator=(MethodInfo&&) = delete;
+
+  ZorroCMethod cmethod = nullptr;
   ClassInfo* owningClass;
-  OpBase* lastOp;//to cut off destructor code of parent class
-  int localIndex;//index in methods table
-  int overIndex;//index of overriden method
-  bool specialMethod;
+  OpBase* lastOp = nullptr;//to cut off destructor code of parent class
+  size_t localIndex = invalidIndexValue;//index in methods table
+  size_t overIndex = invalidIndexValue;//index of overriden method
+  bool specialMethod = false;
 };
 
 struct AttrInfo{
@@ -627,15 +655,21 @@ struct ClassInfo:ScopeSym{
       def(0),parentClass(0),membersCount(0),nativeClass(false)//,methods(0)//,mArr(0)
   {
     st=sytClass;
-    for(int i=0;i<csmCount;++i)specialMethods[i]=0;
+    for(size_t i=0;i<csmCount;++i)specialMethods[i]=0;
   }
   ~ClassInfo();
 
+  ClassInfo(const ClassInfo&) = delete;
+  ClassInfo(ClassInfo&&) = delete;
+
+  ClassInfo& operator=(const ClassInfo&) = delete;
+  ClassInfo& operator=(ClassInfo&&) = delete;
+
   struct HiddenCtorArg{
     Name name;
-    int argIdx;
-    int memIdx;
-    HiddenCtorArg(Name argName,int argArgIdx,int argMemIdx):name(argName),argIdx(argArgIdx),memIdx(argMemIdx){}
+    size_t argIdx;
+    size_t memIdx;
+    HiddenCtorArg(Name argName,size_t argArgIdx,size_t argMemIdx):name(argName),argIdx(argArgIdx),memIdx(argMemIdx){}
   };
 
   typedef std::list<HiddenCtorArg> HiddenArgsList;
@@ -646,8 +680,8 @@ struct ClassInfo:ScopeSym{
 
   Statement* def;
   ScopeSymSmartRef parentClass;
-  int specialMethods[csmCount];
-  int membersCount;
+  size_t specialMethods[csmCount];
+  size_t membersCount;
   std::vector<MethodInfo*> methodsTable;
   std::vector<ClassMember*> members;
   AttrInfo attrs;
@@ -678,15 +712,21 @@ struct ClassInfo:ScopeSym{
 };
 
 struct ClassPropertyInfo:SymInfo{
-  ClassPropertyInfo(Name argName):SymInfo(argName,sytProperty),getIdx(-1),getMethod(0),setIdx(-1),setMethod(0){}
-  int getIdx;
-  MethodInfo* getMethod;
-  int setIdx;
-  MethodInfo* setMethod;
+  ClassPropertyInfo(Name argName):SymInfo(argName,sytProperty){}
+  size_t getIdx = invalidIndexValue;
+  MethodInfo* getMethod = nullptr;
+  size_t setIdx = invalidIndexValue;
+  MethodInfo* setMethod = nullptr;
 };
 
 struct NsInfo:ScopeSym{
   NsInfo(Name argName,ScopeSym* argParent,SymbolsInfo* argSi):ScopeSym(argName,sytNamespace,argParent,argSi){}
+
+  NsInfo(const NsInfo&) = delete;
+  NsInfo(NsInfo&&) = delete;
+
+  NsInfo& operator=(const NsInfo&) = delete;
+  NsInfo& operator=(NsInfo&&) = delete;
 };
 
 class OutputBuffer;
@@ -699,18 +739,18 @@ struct SymbolsInfo{
   ZMemory* mem;
   GlobalScope global;
   Value* globals;
-  int globalsSize;
-  int globalsCount;
-  std::vector<int> freeGlobals;
+  size_t globalsSize;
+  size_t globalsCount;
+  std::vector<size_t> freeGlobals;
   SymVector info;
-  int stdEnd;
+  size_t stdEnd;
 
   ScopeSym* currentScope;
   ClassInfo* currentClass;
 
-  int nilIdx;
-  int trueIdx;
-  int falseIdx;
+  size_t nilIdx;
+  size_t trueIdx;
+  size_t falseIdx;
   ZStringRef nilStr,trueStr,falseStr,object;
 
   ZHash<ClassSpecialMethod> csmMap;
@@ -768,6 +808,12 @@ struct SymbolsInfo{
     addCsmMap("less",csmLess);
   }
 
+  SymbolsInfo(const SymbolsInfo&) = delete;
+  SymbolsInfo(SymbolsInfo&&) = delete;
+
+  SymbolsInfo& operator=(const SymbolsInfo) = delete;
+  SymbolsInfo& operator=(SymbolsInfo&&) = delete;
+
   void init()
   {
     currentScope=&global;
@@ -797,7 +843,7 @@ struct SymbolsInfo{
   void clear()
   {
     global.clearGlobals();
-    for(int i=0;i<globalsCount;i++)
+    for(size_t i=0;i<globalsCount;i++)
     {
       //if(info[i]->st==sytGlobalVar)
       {
@@ -807,23 +853,23 @@ struct SymbolsInfo{
     }
     global.clear();
     delete [] globals;
-    globals=0;
+    globals=nullptr;
   }
 
   ~SymbolsInfo()
   {
   }
 
-  int getGlobalTemporals()
+  size_t getGlobalTemporals()
   {
     return global.freeTemporals.size();
   }
 
-  int newGlobal()
+  size_t newGlobal()
   {
     if(!freeGlobals.empty())
     {
-      int rv=freeGlobals.back();
+      size_t rv=freeGlobals.back();
       freeGlobals.pop_back();
       return rv;
     }
@@ -901,11 +947,11 @@ struct SymbolsInfo{
     return 0;
   }
 
-  int registerGlobalSymbol(Name name,SymInfo* infoPtr)
+  size_t registerGlobalSymbol(Name name,SymInfo* infoPtr)
   {
-    int index=newGlobal();
+    size_t index=newGlobal();
     infoPtr->index=index;
-    if(index>=(int)info.size())info.resize(index+1);
+    if(index>=info.size())info.resize(index+1);
     info[index]=infoPtr;
     if(currentScope->st==sytNamespace)
     {
@@ -918,25 +964,25 @@ struct SymbolsInfo{
     return index;
   }
 
-  void freeGlobal(int idx)
+  void freeGlobal(size_t idx)
   {
     mem->unref(globals[idx]);
     freeGlobals.push_back(idx);
-    info[idx]=0;
+    info[idx]=nullptr;
   }
 
-  int registerLocalSymbol(SymInfo* infoPtr)
+  size_t registerLocalSymbol(SymInfo* infoPtr)
   {
-    int index=currentScope->getSymbols()->getCount();
+    size_t index=currentScope->getSymbols()->getCount();
     infoPtr->index=index;
     currentScope->locals.push_back(infoPtr);
     currentScope->getSymbols()->insert(infoPtr->name,infoPtr);
     return index;
   }
 
-  int registerScopedGlobal(SymInfo* infoPtr)
+  size_t registerScopedGlobal(SymInfo* infoPtr)
   {
-    int index=newGlobal();
+    size_t index=newGlobal();
     infoPtr->index=index;
     info.resize(index+1);
     info[index]=infoPtr;
@@ -959,42 +1005,42 @@ struct SymbolsInfo{
     sm.insert(infoPtr->name,infoPtr->replacedSymbol);
   }
 
-  int registerLocalVar(ZStringRef name)
+  size_t registerLocalVar(ZStringRef name)
   {
-    int rv=registerLocalSymbol(new SymInfo(name,sytLocalVar));
+    size_t rv=registerLocalSymbol(new SymInfo(name,sytLocalVar));
     FuncInfo* fi=(FuncInfo*)currentScope;
     fi->localsCount=fi->symMap.getCount()-fi->argsCount;
     return rv;
   }
 
-  int registerVar(Name name,bool& isLocal)
+  size_t registerVar(Name name,bool& isLocal)
   {
     if(currentScope->st==sytGlobalScope || currentScope->st==sytNamespace)
     {
       isLocal=false;
-      int rv=registerGlobalSymbol(name,new SymInfo(name,sytGlobalVar));
-      DPRINT("register global %s as %d\n",name.val.c_str(),rv);
+      size_t rv=registerGlobalSymbol(name,new SymInfo(name,sytGlobalVar));
+      DPRINT("register global %s as %u\n",name.val.c_str(),static_cast<unsigned int>(rv));
       return rv;
     }else
     {
       isLocal=true;
-      int rv=registerLocalSymbol(new SymInfo(name,sytLocalVar));
-      DPRINT("register local %s as %d\n",name.val.c_str(),rv);
+      size_t rv=registerLocalSymbol(new SymInfo(name,sytLocalVar));
+      DPRINT("register local %s as %u\n",name.val.c_str(),static_cast<unsigned int>(rv));
       return rv;
     }
   }
 
-  int acquireTemp()
+  size_t acquireTemp()
   {
     return currentScope->acquireTemporal();
   }
 
-  void releaseTemp(int index)
+  void releaseTemp(size_t index)
   {
     currentScope->releaseTemporal(index);
   }
 
-  int registerArg(Name name)
+  size_t registerArg(Name name)
   {
     return registerLocalSymbol(new SymInfo(name,sytLocalVar));
   }
@@ -1004,7 +1050,7 @@ struct SymbolsInfo{
     ClassInfo* cinfo=new ClassInfo(name,currentScope,this);
     cinfo->tinfo=TypeInfo(cinfo,vtClass);
     currentClass=cinfo;
-    int index=registerGlobalSymbol(name,cinfo);
+    size_t index=registerGlobalSymbol(name,cinfo);
     Value val;
     val.vt=vtClass;
     val.flags=ValFlagConst;
@@ -1078,7 +1124,7 @@ struct SymbolsInfo{
       ClassMember* ncm=new ClassMember(*cm);
       ncm->refCount=1;
       *val=ncm;
-      if(ncm->index>=(int)currentClass->members.size())
+      if(ncm->index>=currentClass->members.size())
       {
         currentClass->members.resize(ncm->index+1,0);
       }
@@ -1098,7 +1144,7 @@ struct SymbolsInfo{
     ZStringRef mname=getStringConstVal(mnamestr.c_str());
     MethodInfo* m=new MethodInfo(mname,currentScope,currentClass,this);
     m->index=registerGlobalSymbol(getFullName(mname),m);//ci->methods++;
-    m->localIndex=(int)cinfo->methodsTable.size();
+    m->localIndex=cinfo->methodsTable.size();
     m->specialMethod=true;
     m->cmethod=meth;
     cinfo->methodsTable.push_back(m);
@@ -1118,7 +1164,7 @@ struct SymbolsInfo{
     currentClass=cinfo;
     cinfo->nativeClass=true;
     cinfo->tinfo=TypeInfo(cinfo,vtClass);
-    int index=registerGlobalSymbol(name,cinfo);
+    size_t index=registerGlobalSymbol(name,cinfo);
     Value cval;
     cval.vt=vtClass;
     cval.flags=ValFlagConst;
@@ -1134,7 +1180,7 @@ struct SymbolsInfo{
       MethodInfo* cm=new MethodInfo(cname,currentScope,currentClass,this);
       cm->cmethod=ctor;
       cm->index=registerGlobalSymbol(getFullName(cname),cm);//ci->methods++;
-      cm->localIndex=(int)cinfo->methodsTable.size();
+      cm->localIndex=cinfo->methodsTable.size();
       cinfo->methodsTable.push_back(cm);
       cinfo->specialMethods[csmConstructor]=cm->index;
       Value val;
@@ -1152,7 +1198,7 @@ struct SymbolsInfo{
       ZStringRef dname=getStringConstVal("on destroy");
       MethodInfo* dm=new MethodInfo(dname,currentScope,currentClass,this);
       dm->index=registerGlobalSymbol(getFullName(dname),dm);//ci->methods++;
-      dm->localIndex=(int)cinfo->methodsTable.size();
+      dm->localIndex=cinfo->methodsTable.size();
       dm->cmethod=dtor;
       cinfo->methodsTable.push_back(dm);
       cinfo->specialMethods[csmDestructor]=dm->index;
@@ -1178,8 +1224,8 @@ struct SymbolsInfo{
       ZTHROW(CGException,name.pos,"Invalid scope to class member registration");
     }
     ClassInfo* ci=(ClassInfo*)currentScope;
-    SymInfo* ptr;
-    if(!(ptr=ci->getSymbols()->findSymbol(name)))
+    SymInfo* ptr = ci->getSymbols()->findSymbol(name);
+    if(!ptr)
     {
       ClassMember* m=new ClassMember(name);
       m->owningClass=currentClass;
@@ -1223,7 +1269,7 @@ struct SymbolsInfo{
     return m;
   }
 
-  MethodInfo* registerMethod(Name name,int argsCount,bool allowOverride=true)
+  MethodInfo* registerMethod(Name name,size_t argsCount,bool allowOverride=true)
   {
     if(!currentClass)
     {
@@ -1241,11 +1287,11 @@ struct SymbolsInfo{
       MethodInfo* om=((MethodInfo*)psym);
       m->localIndex=om->localIndex;
       currentClass->methodsTable[m->localIndex]=m;
-      m->overIndex=(int)currentClass->methodsTable.size();
+      m->overIndex=currentClass->methodsTable.size();
       currentClass->methodsTable.push_back(om);
     }else
     {
-      m->localIndex=(int)currentClass->methodsTable.size();
+      m->localIndex=currentClass->methodsTable.size();
       currentClass->methodsTable.push_back(m);
     }
 
@@ -1293,7 +1339,7 @@ struct SymbolsInfo{
     do
     {
       fullName=std::string(ptr->name.val.c_str())+"."+fullName;
-    }while((ptr=ptr->getParent()));
+    }while((ptr=ptr->getParent())!=nullptr);
     return fullName;
   }
 
@@ -1303,10 +1349,10 @@ struct SymbolsInfo{
     return mem->mkZString(fullName.c_str(),fullName.length());
   }
 
-  LiterInfo* registerLiter(Name name,int argsCount)
+  LiterInfo* registerLiter(Name name,size_t argsCount)
   {
     LiterInfo* fi=new LiterInfo(name,currentScope,this);
-    int index;
+    size_t index;
     if(currentScope->st!=sytGlobalScope)
     {
       index=registerGlobalSymbol(getFullName(name),fi);
@@ -1326,10 +1372,10 @@ struct SymbolsInfo{
     return fi;
   }
 
-  FuncInfo* registerFunc(Name name,int argsCount)
+  FuncInfo* registerFunc(Name name,size_t argsCount)
   {
     FuncInfo* fi=new FuncInfo(name,currentScope,this);
-    int index;
+    size_t index;
     if(currentScope->st!=sytGlobalScope)
     {
       index=registerGlobalSymbol(getFullName(name),fi);
@@ -1360,12 +1406,12 @@ struct SymbolsInfo{
     return (FuncInfo*)sym;
   }
 
-  int registerCFunc(ZStringRef name,ZorroCFunc func)
+  size_t registerCFunc(ZStringRef name,ZorroCFunc func)
   {
     FuncInfo* fi=new FuncInfo(name,currentScope,this);
     fi->cfunc=func;
     fi->tinfo=TypeInfo(fi);
-    int index=registerGlobalSymbol(name,fi);
+    size_t index=registerGlobalSymbol(name,fi);
     Value val;
     val.vt=vtCFunc;
     val.cfunc=fi;
@@ -1375,12 +1421,12 @@ struct SymbolsInfo{
   }
 
 
-  int getIntConst(ZStringRef name)
+  size_t getIntConst(ZStringRef name)
   {
     SymInfo** it=global.ic.getPtr(name.get());
     if(!it)
     {
-      int index=newGlobal();
+      size_t index=newGlobal();
       SymInfo* infoPtr=new SymInfo(name,sytConstant);
       infoPtr->index=index;
       info.push_back(infoPtr);
@@ -1393,12 +1439,12 @@ struct SymbolsInfo{
     }
   }
 
-  int getDoubleConst(ZStringRef name)
+  size_t getDoubleConst(ZStringRef name)
   {
     SymInfo** it=global.dc.getPtr(name.get());
     if(!it)
     {
-      int index=newGlobal();
+      size_t index=newGlobal();
       SymInfo* infoPtr=new SymInfo(name,sytConstant);
       infoPtr->index=index;
       info.push_back(infoPtr);
@@ -1411,12 +1457,12 @@ struct SymbolsInfo{
     }
   }
 
-  int getStringConst(ZStringRef name)
+  size_t getStringConst(ZStringRef name)
   {
     SymInfo** it=global.sc.getPtr(name.get());
     if(!it)
     {
-      int index=newGlobal();
+      size_t index=newGlobal();
       SymInfo* infoPtr=new SymInfo(name,sytConstant);
       infoPtr->index=index;
       info.push_back(infoPtr);
@@ -1436,7 +1482,7 @@ struct SymbolsInfo{
     SymInfo** it=global.sc.getPtr(name);
     if(!it)
     {
-      int index=newGlobal();
+      size_t index=newGlobal();
       ZStringRef nm=mem->mkZString(name);
       SymInfo* infoPtr=new SymInfo(nm,sytConstant);
       infoPtr->index=index;
@@ -1451,50 +1497,50 @@ struct SymbolsInfo{
     }
   }
 
-  int registerArray()
+  size_t registerArray()
   {
     ZArray* arr=mem->allocZArray();
     arr->ref();
     char name[32];
     snprintf(name, sizeof(name), "array-%p",arr);
     ZStringRef nm=mem->mkZString(name);
-    int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
+    size_t index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=ArrayValue(arr,true);
     return index;
   }
 
-  int registerMap()
+  size_t registerMap()
   {
     ZMap* map=mem->allocZMap();
     map->ref();
     char name[32];
     snprintf(name, sizeof(name), "map-%p",map);
     ZStringRef nm=mem->mkZString(name);
-    int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
+    size_t index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=MapValue(map,true);
     return index;
   }
 
-  int registerSet()
+  size_t registerSet()
   {
     ZSet* set=mem->allocZSet();
     set->ref();
     char name[32];
     snprintf(name, sizeof(name), "set-%p",set);
     ZStringRef nm=mem->mkZString(name);
-    int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
+    size_t index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=SetValue(set,true);
     return index;
   }
 
-  int registerRegExp()
+  size_t registerRegExp()
   {
     RegExpVal* re=mem->allocRegExp();
     re->ref();
     char name[32];
     snprintf(name, sizeof(name), "regexp-%p",re);
     ZStringRef nm=mem->mkZString(name);
-    int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
+    size_t index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     Value val;
     val.vt=vtRegExp;
     val.flags=0;
@@ -1503,14 +1549,14 @@ struct SymbolsInfo{
     return index;
   }
 
-  int registerRange()
+  size_t registerRange()
   {
     Range* r=mem->allocRange();
     r->ref();
     char name[32];
     snprintf(name, sizeof(name), "range-%p",r);
     ZStringRef nm=mem->mkZString(name);
-    int index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
+    size_t index=registerGlobalSymbol(nm,new SymInfo(nm,sytConstant));
     globals[index]=RangeValue(r,true);
     return index;
   }
@@ -1538,10 +1584,10 @@ struct SymbolsInfo{
     return true;
   }
 
-  int registerAttr(const Name& name)
+  size_t registerAttr(const Name& name)
   {
     AttrSym* attr=new AttrSym(name);
-    int index=newGlobal();
+    size_t index=newGlobal();
     attr->index=index;
     info.resize(index+1);
     info[index]=attr;

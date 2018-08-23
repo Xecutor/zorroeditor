@@ -315,7 +315,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
                 {
                   cp->setMethod->locals[0]->tinfo.merge(info);
                 }
-              }else if(cp->setIdx>=0)
+              }else if(cp->setIdx!=SymInfo::invalidIndexValue)
               {
                 it->symRef.asClass()->members[cp->setIdx]->tinfo.merge(info);
               }
@@ -412,7 +412,11 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
     }break;
     case etNumArg:
     {
-      int index=ZString::parseInt(e->val.c_str()+1)-1;
+      size_t index=static_cast<size_t>(ZString::parseInt(e->val.c_str()+1));
+      if(index>0)
+      {
+        --index;
+      }
       SymInfo* sym=index<si->currentScope->locals.size()?si->currentScope->locals[index]:0;
       if(sym)
       {
@@ -459,7 +463,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
         {
           if(it->symRef.asClass())
           {
-            int midx=it->symRef.asClass()->specialMethods[csmCall];
+            size_t midx=it->symRef.asClass()->specialMethods[csmCall];
             if(midx)
             {
               info.merge(si->globals[midx].func->rvtype);
@@ -489,7 +493,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
                 if(cp->getMethod)
                 {
                   info.merge(cp->getMethod->rvtype);
-                }else if(cp->getIdx>=0)
+                }else if(cp->getIdx!=SymInfo::invalidIndexValue)
                 {
                   info.merge(it->symRef.asClass()->members[cp->getIdx]->tinfo);
                 }
@@ -499,7 +503,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
               }
             }else
             {
-              int midx=ci->specialMethods[csmGetProp];
+              size_t midx=ci->specialMethods[csmGetProp];
               if(midx)
               {
                 MethodInfo* mi=si->globals[midx].method;
@@ -529,7 +533,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
           info.merge(tmp.arr);
         }else if(ti.vt==vtObject && ti.symRef)
         {
-          int midx=ti.symRef.asClass()->specialMethods[csmGetKey];
+          size_t midx=ti.symRef.asClass()->specialMethods[csmGetKey];
           if(midx)
           {
             info.merge(si->globals[midx].func->rvtype);
@@ -549,7 +553,7 @@ void CodeGenerator::getExprType(Expr* e,TypeInfo& info)
           info.merge(tmp.arr);
         }else if(ti.vt==vtObject && ti.symRef)
         {
-          int midx=ti.symRef.asClass()->specialMethods[csmGetIndex];
+          size_t midx=ti.symRef.asClass()->specialMethods[csmGetIndex];
           if(midx)
           {
             info.merge(si->globals[midx].func->rvtype);
@@ -1007,8 +1011,8 @@ void CodeGenerator::generateMacro(const Name& name,FuncParamList* args,StmtList*
 
 void CodeGenerator::checkDuplicate(const Name& nm,const char* type)
 {
-  SymInfo* sym;
-  if((sym=si->currentScope->getSymbols()->findSymbol(nm)))
+  SymInfo* sym = si->currentScope->getSymbols()->findSymbol(nm);
+  if(sym)
   {
     ZTHROW(CGException,nm.pos,"Duplicate %{} %{}, previously defined at %{}",type,nm,sym->name.pos);
   }
@@ -1050,9 +1054,9 @@ void CodeGenerator::fillNames(StmtList* sl,bool deep)
         ScopeSym* nsPtr;
         if(ns.ns)
         {
-          for(NameList::iterator it=ns.ns->begin(),end=ns.ns->end();it!=end;++it)
+          for(auto& nsItem : *ns.ns)
           {
-            if(!si->enterNamespace(*it))
+            if(!si->enterNamespace(nsItem))
             {
               throw CGException("not a namespace",ns.pos);
             }
@@ -1062,7 +1066,7 @@ void CodeGenerator::fillNames(StmtList* sl,bool deep)
         {
           char nsName[64];
           int l=snprintf(nsName, sizeof(nsName), "anonymous-ns-%p",&ns);
-          ns.name=Name(vm->mkZString(nsName,l),ns.pos);
+          ns.name=Name(vm->mkZString(nsName,static_cast<size_t>(l)),ns.pos);
           si->enterNamespace(ns.name);
           nsPtr=si->currentScope;
           si->currentScope->end=ns.end;
@@ -1070,8 +1074,9 @@ void CodeGenerator::fillNames(StmtList* sl,bool deep)
         fillNames(ns.body,deep);
         if(ns.ns)
         {
-          for(NameList::iterator it=ns.ns->begin(),end=ns.ns->end();it!=end;++it)
+          for(auto& nsItem:*ns.ns)
           {
+            (void)nsItem;
             si->returnScope();
           }
         }else
@@ -1120,25 +1125,25 @@ void CodeGenerator::fillNames(StmtList* sl,bool deep)
         checkDuplicate(lst.name,"liter");
         ScopeSym* curScope=si->currentScope;
         LiterInfo* li=si->registerLiter(lst.name,lst.args->size());
-        for(LiterArgsList::iterator it=lst.args->begin(),end=lst.args->end();it!=end;++it)
+        for(auto& arg:*lst.args)
         {
           ScopeSym::LiterList* curLst;
-          ScopeSym::LiterList** ll=curScope->literMap.getPtr((*it)->marker.val.get());
+          ScopeSym::LiterList** ll=curScope->literMap.getPtr(arg->marker.val.get());
           if(!ll)
           {
             curLst=new ScopeSym::LiterList();
-            curScope->literMap.insert((*it)->marker.val.get(),curLst);
+            curScope->literMap.insert(arg->marker.val.get(),curLst);
           }else
           {
             curLst=*ll;
           }
           curLst->push_back(li);
-          if(!(*it)->optional)break;
+          if(!arg->optional)break;
         }
-        for(LiterArgsList::iterator it=lst.args->begin(),end=lst.args->end();it!=end;++it)
+        for(auto& arg:*lst.args)
         {
-          li->markers.push_back(**it);
-          si->registerArg((*it)->name);
+          li->markers.push_back(*arg);
+          si->registerArg(arg->name);
         }
 
         si->returnScope();
@@ -1154,9 +1159,9 @@ void CodeGenerator::fillNames(StmtList* sl,bool deep)
         si->registerScopedGlobal(new SymInfo(est.name,sytConstant));
         if(est.items)
         {
-          for(ExprList::iterator it=est.items->begin(),end=est.items->end();it!=end;++it)
+          for(auto& exprPtr:*est.items)
           {
-            Expr& ex=**it;
+            Expr& ex=*exprPtr;
             Name nm=ex.et==etVar?ex.getSymbol().name:ex.e1->getSymbol().name;
             si->registerScopedGlobal(new SymInfo(nm,sytConstant));
           }
@@ -1186,7 +1191,7 @@ void CodeGenerator::fillClassNames(StmtList* sl)
           isCtor=csm==csmConstructor;
           fname="on "+f.name.val;
         }
-        int argsCount=f.argsCount();
+        size_t argsCount=f.argsCount();
         if(isCtor)
         {
           argsCount=currentClass->args?currentClass->args->size():0;
@@ -1402,7 +1407,7 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
         ec.mkTmpDst();
         op+=generateExpr(*it,ec);
       }
-      int idx=0;
+      size_t idx=0;
       for(ExprList::iterator it=las.lst1->begin(),end=las.lst1->end();it!=end;++it)
       {
         OpArg src;
@@ -1425,12 +1430,12 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
             Expr* eidx=e1->e2;
             ExprContext ec2(si);
             OpArg arr=genArgExpr(op,earr,ec2);
-            OpArg idx=genArgExpr(op,eidx,ec2);
+            OpArg aidx=genArgExpr(op,eidx,ec2);
             switch(e1->et)
             {
-              case etIndex:op+=new OpSetArrayItem(arr,idx,src,atNul);break;
-              case etProp:op+=new OpSetProp(arr,idx,src,atNul);break;
-              case etKey:op+=new OpSetKey(arr,idx,src,atNul);break;
+              case etIndex:op+=new OpSetArrayItem(arr,aidx,src,atNul);break;
+              case etProp:op+=new OpSetProp(arr,aidx,src,atNul);break;
+              case etKey:op+=new OpSetKey(arr,aidx,src,atNul);break;
               default:break;
             }
           }else
@@ -1519,27 +1524,27 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
         if(currentClass->parent && si->currentClass->parentClass.asClass()->specialMethods[csmConstructor])
         {
           ClassParent* p=currentClass->parent;
-          int acnt=0;
+          index_type acnt=0;
           if(p->args)
           {
-            for(ExprList::iterator ait=p->args->begin(),aend=p->args->end();ait!=aend;++ait)
+            for(auto& arg:*p->args)
             {
               ExprContext ec(si,atStack);
-              fp+=generateExpr(*ait,ec);
-              acnt++;
+              fp+=generateExpr(arg,ec);
+              ++acnt;
             }
           }
           ClassInfo* pi=si->currentClass->parentClass.asClass();
           fp+=new OpCallMethod(acnt,OpArg(atLocal,selfIdx),si->globals[pi->specialMethods[csmConstructor]].method->localIndex,atNul);
         }
         ClassInfo::HiddenArgsList& halst=((ClassInfo*)si->currentScope->getParent())->hiddenArgs;
-        for(ClassInfo::HiddenArgsList::iterator it=halst.begin(),end=halst.end();it!=end;++it)
+        for(auto& arg:halst)
         {
-          fp+=OpPair(it->name.pos,vm,new OpAssign(OpArg(atMember,it->memIdx),OpArg(atLocal,it->argIdx),OpArg()));
+          fp+=OpPair(arg.name.pos,vm,new OpAssign(OpArg(atMember,arg.memIdx),OpArg(atLocal,arg.argIdx),OpArg()));
         }
-        for(StmtList::iterator sit=currentClass->body->begin(),send=currentClass->body->end();sit!=send;++sit)
+        for(auto& cstptr:*currentClass->body)
         {
-          Statement& cst=**sit;
+          auto& cst = *cstptr;
           if(cst.st==stClassMemberDef)
           {
             ClassMemberDef& cmd=cst.as<ClassMemberDef>();
@@ -1592,7 +1597,7 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
           if(currentClass->parent)
           {
             ClassInfo* parent=(ClassInfo*)si->getSymbol(currentClass->parent->name);
-            int pdtor=parent->specialMethods[csmDestructor];
+            size_t pdtor=parent->specialMethods[csmDestructor];
             if(pdtor)
             {
               DPRINT("parent of class %s has dtor\n",currentClass->name.val.c_str());
@@ -1720,7 +1725,7 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
     case stForLoop:
     {
       ForLoopStatement& fst=st.as<ForLoopStatement>();
-      int vCnt=fst.vars->size();
+      size_t vCnt=fst.vars->size();
       if(vCnt!=1 && vCnt!=2)
       {
         throw SyntaxErrorException("Invalid number of variables in for loop",fst.pos);
@@ -2001,8 +2006,8 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
         {
           for(FuncParamList::iterator ait=args->begin(),aend=args->end();ait!=aend;++ait)
           {
-            SymInfo* sym;
-            if((sym=ci->symMap.findSymbol(**ait)) && sym->st==sytClassMember && ((ClassMember*)sym)->owningClass==ci)
+            SymInfo* sym = ci->symMap.findSymbol(**ait);
+            if(sym && sym->st==sytClassMember && ((ClassMember*)sym)->owningClass==ci)
             {
               classHasMemberInit=true;
               break;
@@ -2012,7 +2017,7 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
         if(args || classHasMemberInit || (currentClass->parent && ci->parentClass.asClass()->specialMethods[csmConstructor]))
         {
           ZStringRef onCreate=si->getStringConstVal("on create");
-          int argsCount=args?args->size():0;
+          size_t argsCount=args?args->size():0;
           MethodInfo* mi=si->registerMethod(onCreate,argsCount,false);
           ScopeGuard sg2(si);
           ci->specialMethods[csmConstructor]=mi->index;
@@ -2022,22 +2027,22 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
           //index_type resultIdx=si->registerLocalVar(result);
 
           ClassParent* p=currentClass->parent;
-          int acnt=0;
+          size_t acnt=0;
           if(p && ci->parentClass.asClass()->specialMethods[csmConstructor])
           {
             if(p->args)
             {
-              for(ExprList::iterator ait=p->args->begin(),aend=p->args->end();ait!=aend;++ait)
+              for(auto& arg:*p->args)
               {
                 ExprContext ec(si,atStack);
                 try{
-                  fp+=generateExpr(*ait,ec);
+                  fp+=generateExpr(arg,ec);
                 }catch(...)
                 {
                   mi->defValEntries.clear();
                   throw;
                 }
-                acnt++;
+                ++acnt;
               }
             }
             fp+=new OpCallMethod(acnt,OpArg(atLocal,selfIdx),si->globals[ci->parentClass.asClass()->specialMethods[csmConstructor]].method->localIndex,atNul);
@@ -2405,14 +2410,14 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
           int64_t minVal=ints.begin()->first;
           int64_t maxVal=(--ints.end())->first;
           //DPRINT("allint switch(%" PRId64 "-%" PRId64 ")\n",minVal,maxVal);
-          if(maxVal-minVal>(int64_t)ints.size()/2-10)
+          if(maxVal-minVal>static_cast<int64_t>(ints.size()/2)-10)
           {
             OpRangeSwitch* sw=new OpRangeSwitch(src);
             op+=OpPair(st.pos,vm,sw);
             sw->minValue=minVal;
             sw->maxValue=maxVal;
-            sw->cases=new OpBase*[maxVal-minVal+1];
-            memset(sw->cases,0,sizeof(OpBase*)*(maxVal-minVal+1));
+            sw->cases=new OpBase*[static_cast<size_t>(maxVal-minVal+1)];
+            memset(sw->cases,0,static_cast<size_t>(sizeof(OpBase*)*(maxVal-minVal+1)));
             if(def)
             {
               OpPair defCase(def->pos,vm);
@@ -2468,26 +2473,26 @@ void CodeGenerator::generateStmt(OpPair& op,Statement& st)
           }
           ZHash<OpBase*>::Iterator it(*sw->cases);
           ZString* key;
-          OpBase** val;
-          while(it.getNext(key,val))
+          OpBase** value;
+          while(it.getNext(key,value))
           {
-            SwitchCase* swcase=(SwitchCase*)*val;
+            SwitchCase* swcase=(SwitchCase*)*value;
             try{
               OpPair caseBody=generateStmtList(swcase->caseBody);
               if(*caseBody.first)
               {
                 op.chainFixes(caseBody);
-                *val=caseBody.first.release();
+                *value=caseBody.first.release();
               }else
               {
-                op.addFix(*val);
+                op.addFix(*value);
               }
             }catch(...)
             {
-              *val=0;
-              while(it.getNext(key,val))
+              *value=0;
+              while(it.getNext(key,value))
               {
-                *val=0;
+                *value=0;
               }
               throw;
             }
@@ -2737,7 +2742,7 @@ CodeGenerator::OpPair CodeGenerator::genArgs(OpPair& fp,FuncParamList* args,bool
 {
   bool hasVarArg=false;
   bool hasNamedArg=false;
-  int lastArgIdx;
+  size_t lastArgIdx = 0;
   FuncInfo* fi=(FuncInfo*)si->currentScope;
   OpPair argOps(FileLocation(),vm);
   if(args)
@@ -2745,12 +2750,12 @@ CodeGenerator::OpPair CodeGenerator::genArgs(OpPair& fp,FuncParamList* args,bool
     for(FuncParamList::iterator ait=args->begin(),aend=args->end();ait!=aend;++ait)
     {
       FuncParam& p=**ait;
-      int aidx=-1;
+      size_t aidx=SymInfo::invalidIndexValue;
       if(isCtor)
       {
         ClassInfo* ci=si->currentClass;
-        SymInfo* sym;
-        if((sym=si->currentScope->getParent()->getSymbols()->findSymbol(**ait)) && sym->st==sytClassMember)
+        SymInfo* sym = si->currentScope->getParent()->getSymbols()->findSymbol(**ait);
+        if(sym && sym->st==sytClassMember)
         {
           ClassMember* cm=(ClassMember*)sym;
           if(cm->owningClass==ci)
@@ -2763,7 +2768,7 @@ CodeGenerator::OpPair CodeGenerator::genArgs(OpPair& fp,FuncParamList* args,bool
           }
         }
       }
-      if(aidx==-1)
+      if(aidx==SymInfo::invalidIndexValue)
       {
         if(si->currentScope->getSymbols()->findSymbol(p))
         {
@@ -2869,7 +2874,7 @@ OpArg CodeGenerator::getArgType(Expr* expr,bool lvalue)
     case etFalse:rv.idx=si->falseIdx;break;
     case etRegExp:
     {
-      int idx=si->registerRegExp();
+      size_t idx=si->registerRegExp();
       rv.idx=idx;
       RegExpVal* rxv=si->globals[idx].regexp;
       kst::RegExp* rx=rxv->val;
@@ -2891,9 +2896,9 @@ OpArg CodeGenerator::getArgType(Expr* expr,bool lvalue)
         //expr->val.c_str()
         throw CGException(FORMAT("Invalid regexp %{}(%{}).",expr->val.c_str(),rx->getLastError()),expr->pos);
       }
-      rxv->marrSize=rx->getBracketsCount();
+      rxv->marrSize=static_cast<size_t>(rx->getBracketsCount());
       rxv->marr=new kst::SMatch[rxv->marrSize];
-      rxv->narrSize=rx->getNamedBracketsCount();
+      rxv->narrSize=static_cast<size_t>(rx->getNamedBracketsCount());
       if(rxv->narrSize)
       {
         rxv->narr=new kst::NamedMatch[rxv->narrSize];
@@ -2954,8 +2959,8 @@ OpArg CodeGenerator::getArgType(Expr* expr,bool lvalue)
       }
     }break;
     case etNumArg:{
-      int index=ZString::parseInt(expr->val.c_str()+1)-1;
-      return rv=OpArg(atLocal,index);
+      size_t index=static_cast<size_t>(ZString::parseInt(expr->val.c_str()+1)-1);
+      rv=OpArg(atLocal,index);
     }break;
     default:abort();break;
   }
@@ -2964,7 +2969,7 @@ OpArg CodeGenerator::getArgType(Expr* expr,bool lvalue)
 
 OpArg CodeGenerator::genPropGetter(const FileLocation& pos,OpPair& op,ClassPropertyInfo* cp,ExprContext& ec)
 {
-  if(cp->getIdx!=-1)
+  if(cp->getIdx!=SymInfo::invalidIndexValue)
   {
     return OpArg(atMember,cp->getIdx);
   }else if(cp->getMethod)
@@ -2984,7 +2989,7 @@ OpArg CodeGenerator::genPropGetter(const FileLocation& pos,OpPair& op,ClassPrope
 
 void CodeGenerator::genPropSetter(const FileLocation& pos,OpPair& op,ClassPropertyInfo* cp,OpArg src)
 {
-  if(cp->setIdx!=-1)
+  if(cp->setIdx!=SymInfo::invalidIndexValue)
   {
     op+=new OpAssign(OpArg(atMember,cp->setIdx),src,OpArg());
   }else if(cp->getMethod)
@@ -3017,14 +3022,15 @@ CodeGenerator::OpPair CodeGenerator::genBinOp(Expr* expr,ExprContext& ec)
   OpPair op(expr->pos,vm);
   ExprContext ecl(si);
   SymInfo* sym;
-  if(isSelfUpdate && currentClass && (sym=isSpecial(expr->e1)) && sym->st==sytProperty)
+  if(isSelfUpdate && currentClass && (sym=isSpecial(expr->e1))!=nullptr && sym->st==sytProperty)
   {
     ClassPropertyInfo* cp=(ClassPropertyInfo*)sym;
-    if((cp->getIdx==-1 && !cp->getMethod) || (cp->setIdx==-1 && !cp->setMethod))
+    if((cp->getIdx==SymInfo::invalidIndexValue && !cp->getMethod) ||
+       (cp->setIdx==SymInfo::invalidIndexValue && !cp->setMethod))
     {
       ZTHROW(CGException,expr->pos,"Property must be both readable and writable to perform this operation");
     }
-    if(cp->getIdx!=-1 && cp->getIdx==cp->setIdx)
+    if(cp->getIdx!=SymInfo::invalidIndexValue && cp->getIdx==cp->setIdx)
     {
       left=OpArg(atMember,cp->getIdx);
     }else
@@ -3124,7 +3130,7 @@ CodeGenerator::OpPair CodeGenerator::genUnOp(Expr* expr,CodeGenerator::ExprConte
   }
   OpPair op(expr->pos,vm);
   SymInfo* sym;
-  if(lvalue && currentClass && (sym=isSpecial(expr->e1)) && sym->st==sytProperty)
+  if(lvalue && currentClass && (sym=isSpecial(expr->e1))!=nullptr && sym->st==sytProperty)
   {
     ClassPropertyInfo* cp=(ClassPropertyInfo*)sym;
     ExprContext ec2(si);
@@ -3148,9 +3154,9 @@ CodeGenerator::OpPair CodeGenerator::genUnOp(Expr* expr,CodeGenerator::ExprConte
 
 
 struct ArrayInitPair{
-  int index;
+  size_t index;
   Expr* expr;
-  ArrayInitPair(int argIndex,Expr* argExpr):index(argIndex),expr(argExpr){}
+  ArrayInitPair(size_t argIndex,Expr* argExpr):index(argIndex),expr(argExpr){}
 };
 
 struct MapInitPair{
@@ -3245,12 +3251,12 @@ CodeGenerator::OpPair CodeGenerator::fillDst(const FileLocation& pos,const OpArg
   }
 }
 
-void CodeGenerator::gatherNumArgs(Expr* expr,std::vector<int>& args)
+void CodeGenerator::gatherNumArgs(Expr* expr,std::vector<size_t>& args)
 {
   if(expr->et==etNumArg)
   {
-    int index=ZString::parseInt(expr->val.c_str()+1);
-    std::vector<int>::iterator it=std::find(args.begin(),args.end(),index);
+    size_t index=static_cast<size_t>(ZString::parseInt(expr->val.c_str()+1));
+    auto it=std::find(args.begin(),args.end(),index);
     if(it==args.end())
     {
       args.push_back(index);
@@ -3311,9 +3317,9 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
         RegExpVal* rxv=si->globals[mop->right.idx].regexp;
         if(rxv->narrSize)
         {
-          int cnt=rxv->val->getNamedBracketsCount();
+          size_t cnt=rxv->val->getNamedBracketsCount();
           mop->vars=new OpArg[cnt];
-          for(int i=0;i<cnt;++i)
+          for(size_t i=0;i<cnt;++i)
           {
             Expr evar(etVar,vm->mkZString(rxv->val->getName(i)));
             mop->vars[i]=getArgType(&evar,true);
@@ -3353,16 +3359,16 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
       }
       if(!ec.ifContext)
       {
-        SymInfo* sym;
         ExprContext ecd(si);
         OpArg dst;
-        if(currentClass && (sym=isSpecial(expr->e1)) && sym->st==sytProperty)
+        SymInfo* sym = currentClass ? isSpecial(expr->e1) : nullptr;
+        if(sym && sym->st==sytProperty)
         {
           ClassPropertyInfo* cp=(ClassPropertyInfo*)sym;
-          if(cp->setIdx!=-1)
+          if(cp->setIdx!=SymInfo::invalidIndexValue)
           {
             dst=OpArg(atMember,cp->setIdx);
-          }else if(cp->setMethod!=0)
+          }else if(cp->setMethod!=nullptr)
           {
             if(si->currentScope->st!=sytMethod)
             {
@@ -3602,19 +3608,19 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
                 self=OpArg(atLocal,f->argsCount);
               }
               src=OpArg(atGlobal,f->index);
-              int cnt=f->closedVars.size();
+              size_t cnt=f->closedVars.size();
               OpArg* arr=cnt?&f->closedVars[0]:0;
-              for(ScopeSym::ClosedFuncVector::iterator it=f->closedFuncs.begin(),end=f->closedFuncs.end();it!=end;++it)
+              for(auto& cf:f->closedFuncs)
               {
-                FuncInfo* cfi=si->globals[it->src.idx].func;
+                FuncInfo* cfi=si->globals[cf.src.idx].func;
                 OpArg cself;
                 if(cfi->selfClosed)
                 {
                   cself=OpArg(atLocal,f->argsCount);
                 }
-                int ccnt=cfi->closedVars.size();
+                size_t ccnt=cfi->closedVars.size();
                 OpArg* carr=ccnt?&cfi->closedVars[0]:0;
-                op+=new OpMakeClosure(it->src,it->dst,cself,ccnt,carr);
+                op+=new OpMakeClosure(cf.src,cf.dst,cself,ccnt,carr);
               }
               op+=new OpMakeClosure(src,ec.dst,self,cnt,arr);
               return op;
@@ -3624,7 +3630,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
           case sytProperty:
           {
             ClassPropertyInfo* cp=(ClassPropertyInfo*)sym;
-            if(cp->getIdx!=-1)
+            if(cp->getIdx!=SymInfo::invalidIndexValue)
             {
               src=OpArg(atMember,cp->getIdx);
             }else if(cp->getMethod)
@@ -3659,10 +3665,10 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
       OpPair op(expr->pos,vm);
       OpArg self;
       OpArg func;
-      int cnt=0;
+      size_t cnt=0;
       ExprContext ec2(si);
       bool methodCall=false;
-      int methodIndex;
+      size_t methodIndex = SymInfo::invalidIndexValue;
       if(si->currentClass)
       {
         Expr* mname=expr->e1;
@@ -3678,7 +3684,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
             ZTHROW(CGException,expr->pos,"Symbol %{} is not method",mname->getSymbol());
           }
           MethodInfo* mi=(MethodInfo*)sym;
-          if(mi->overIndex==-1)
+          if(mi->overIndex==SymInfo::invalidIndexValue)
           {
             ZTHROW(CGException,expr->pos,"Method %{} wasn't overriden",mname->getSymbol());
           }
@@ -3686,8 +3692,8 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
           methodIndex=mi->overIndex;
         }else
         {
-          SymInfo* sym;
-          methodCall=(sym=isSpecial(expr->e1)) && sym->st==sytMethod;
+          SymInfo* sym = isSpecial(expr->e1);
+          methodCall=sym && sym->st==sytMethod;
           if(methodCall)
           {
             methodIndex=((MethodInfo*)sym)->localIndex;
@@ -3696,8 +3702,8 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
       }
       if(methodCall)
       {
-        int selfIdx=si->getSymbol(Symbol(selfName,0))->index;
-        DPRINT("self idx=%d\n",selfIdx);
+        size_t selfIdx=si->getSymbol(Symbol(selfName,0))->index;
+        DPRINT("self idx=%u\n",static_cast<unsigned int>(selfIdx));
         self=OpArg(atLocal,selfIdx);
         //func=OpArg(atGlobal,fidx);
       }/*else
@@ -3747,7 +3753,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
           {
             ExprContext ec3(si,atStack);
             op+=generateExpr(arg,ec3);
-            cnt++;
+            ++cnt;
           }
         }
       }
@@ -3889,9 +3895,9 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
           arr.at=atGlobal;
           arr.idx=si->registerArray();
           ZArray* za=si->globals[arr.idx].arr;
-          int cnt=expr->lst?expr->lst->size():0;
+          size_t cnt=expr->lst?expr->lst->size():0;
           za->resize(cnt);
-          int i=0;
+          size_t i=0;
           for(ExprList::iterator it=expr->lst->begin(),end=expr->lst->end();it!=end;++it,++i)
           {
             Value& item=za->getItemRef(i);
@@ -3910,7 +3916,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
           }
         }else
         {
-          int i=0;
+          size_t i=0;
           for(ExprList::iterator it=expr->lst->begin(),end=expr->lst->end();it!=end;++it,++i)
           {
             init.push_back(ArrayInitPair(i,*it));
@@ -4130,11 +4136,11 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
       FuncDeclStatement& fds=*expr->func;
       fds.name=nm;
       FuncInfo* fi;
-      int argsCount=fds.argsCount();
+      size_t argsCount=fds.argsCount();
       bool numArgs=false;
       if(expr->exprFunc)
       {
-        std::vector<int> argIndexes;
+        std::vector<size_t> argIndexes;
         ReturnStatement& rs=fds.body->front()->as<ReturnStatement>();
         gatherNumArgs(rs.expr,argIndexes);
         if(!argIndexes.empty())
@@ -4172,7 +4178,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
       OpPair argOps=genArgs(fp,fds.args,false,selfIdx);
       if(numArgs)
       {
-        for(int idx=1;idx<=argsCount;++idx)
+        for(size_t idx=1;idx<=argsCount;++idx)
         {
           si->registerArg(vm->mkZString(FORMAT("\\%{}",idx)));
         }
@@ -4193,7 +4199,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
       {
         si->registerLocalVar(vm->mkZString("closure-storage"));
       }
-      int ccount=(int)si->currentScope->closedVars.size();
+      size_t ccount=si->currentScope->closedVars.size();
       OpArg* idxPtr=ccount ? &si->currentScope->closedVars[0] : nullptr;
       finArgs(fp,argOps);
       sg.release();
@@ -4294,7 +4300,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
     case etCombine:
     {
       ExprList& lst=*expr->lst;
-      int count=lst.size();
+      size_t count=lst.size();
       OpArg* args=new OpArg[count];
       int idx=0;
       ExprContext ec2(si);
@@ -4370,7 +4376,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr,ExprContext& ec)
     }break;
     case etNumArg:
     {
-      int index=ZString::parseInt(expr->val.c_str()+1)-1;
+      size_t index=static_cast<size_t>(ZString::parseInt(expr->val.c_str()+1)-1);
       return fillDst(expr->pos,OpArg(atLocal,index),ec);
     }break;
     case etMapOp:break;

@@ -172,9 +172,9 @@ bool Expr::isDeepConst()const
     case etMap:
       if(lst)
       {
-        for(ExprList::iterator it=lst->begin(),end=lst->end();it!=end;++it)
+        for(auto* eptr:*lst)
         {
-          if(!(*it)->isConst())return false;
+          if(!eptr->isConst())return false;
         }
       }
       return true;

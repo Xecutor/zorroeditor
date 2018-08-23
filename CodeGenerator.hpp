@@ -300,7 +300,7 @@ public:
   OpPair genArgs(OpPair& fp,FuncParamList* args,bool isCtor,index_type& selfIdx);
   void finArgs(OpPair& fp,OpPair& argOps);
 
-  void gatherNumArgs(Expr* expr,std::vector<int>& args);
+  void gatherNumArgs(Expr* expr,std::vector<size_t>& args);
 
   OpArg getArgType(Expr* expr,bool lvalue=false);
   bool isSimple(Expr* expr);

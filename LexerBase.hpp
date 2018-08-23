@@ -9,11 +9,11 @@ namespace zorro{
 
 struct Term{
   int tt;
-  int length;
+  unsigned int length;
   FileLocation pos;
-  Term():tt(-1),length(0){}
-  Term(int argTt):tt(argTt),length(0){}
-  Term(int argTt,const FileLocation& argPos):tt(argTt),length(0),pos(argPos)
+  Term():tt(-1),length(0u){}
+  Term(int argTt):tt(argTt),length(0u){}
+  Term(int argTt,const FileLocation& argPos):tt(argTt),length(0u),pos(argPos)
   {
   }
   bool operator<(const Term& argOther)const
@@ -36,14 +36,14 @@ struct Term{
   {
     return tt!=argOther.tt;
   }
-  const char* getValue(int& len)const
+  const char* getValue(unsigned int& len)const
   {
     if(pos.fileRd)
     {
       len=length;
       return pos.fileRd->getBufferAt(pos.offset);
     }
-    return 0;
+    return nullptr;
   }
   void getValue(std::string& val)const
   {
@@ -227,7 +227,7 @@ struct LexerBase{
       }
       return last;
     }
-    return last;
+//    return last;
   }
   Term& peekNext()
   {

@@ -50,19 +50,19 @@ public:
 
   void registerConst(const char* name,int64_t value)
   {
-    int idx=vm->symbols.registerScopedGlobal(new SymInfo(vm->mkZString(name),sytConstant));
+    size_t idx=vm->symbols.registerScopedGlobal(new SymInfo(vm->mkZString(name),sytConstant));
     vm->symbols.globals[idx]=IntValue(value,true);
   }
 
   void registerConst(const char* name,double value)
   {
-    int idx=vm->symbols.registerScopedGlobal(new SymInfo(vm->mkZString(name),sytConstant));
+    size_t idx=vm->symbols.registerScopedGlobal(new SymInfo(vm->mkZString(name),sytConstant));
     vm->symbols.globals[idx]=DoubleValue(value,true);
   }
 
   void registerConst(const char* name,const char* value)
   {
-    int idx=vm->symbols.registerScopedGlobal(new SymInfo(vm->mkZString(name),sytConstant));
+    size_t idx=vm->symbols.registerScopedGlobal(new SymInfo(vm->mkZString(name),sytConstant));
     vm->symbols.globals[idx]=StringValue(vm->mkZString(value),true);
   }
 
@@ -70,7 +70,7 @@ public:
   {
     ZStringRef zname=vm->mkZString(name);
     SymInfo* si=new SymInfo(zname,sytGlobalVar);
-    int idx=vm->symbols.registerGlobalSymbol(zname,si);
+    size_t idx=vm->symbols.registerGlobalSymbol(zname,si);
     Value* gv=vm->symbols.globals+idx;
     ZASSIGN(vm,gv,&val);
   }
@@ -134,7 +134,7 @@ public:
     return cp;
   }
 
-  int registerClassMember(const char* name)
+  size_t registerClassMember(const char* name)
   {
     return vm->symbols.registerMember(vm->mkZString(name))->index;
   }

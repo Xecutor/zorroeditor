@@ -41,7 +41,7 @@ struct ZStack{
     }
     return stackTop;
   }
-  void pushBulk(int inc)
+  void pushBulk(size_t inc)
   {
     if(stackTop+inc>=stackMax)
     {
@@ -57,11 +57,11 @@ struct ZStack{
   {
     stackTop=stack-1;
   }
-  void resize(int inc)
+  void resize(size_t inc)
   {
     if(inc==0)inc=16;
-    size_t topSz=stackTop-stack;
-    size_t sz=stackMax-stack;
+    size_t topSz=static_cast<size_t>(stackTop-stack);
+    size_t sz=static_cast<size_t>(stackMax-stack);
     T* newStack=new T[sz+inc];
     if(stack)
     {
@@ -74,7 +74,7 @@ struct ZStack{
     stackTop=stack+topSz;
     (owner->*onResize)();
   }
-  void setSize(int newSize)
+  void setSize(size_t newSize)
   {
     stackTop=stack+newSize-1;
   }
@@ -82,9 +82,9 @@ struct ZStack{
   {
     --stackTop;
   }
-  int size()
+  size_t size()
   {
-    return stackTop-stack+1;
+    return static_cast<size_t>(stackTop-stack+1);
   }
 };
 

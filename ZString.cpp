@@ -332,7 +332,7 @@ ZString* ZString::substr(ZMemory* mem,uint32_t startPos,uint32_t len)
     while(ptr<end)
     {
       symbol=getNextChar(ptr,cs);
-      *dst++=symbol;
+      *dst++=static_cast<char>(symbol);
     }
     *dst=0;
   }else
@@ -412,7 +412,7 @@ ZString* ZString::erase(ZMemory* mem,uint32_t startPos,uint32_t len)
     while(ptr<end)
     {
       symbol=getNextChar(ptr,cs);
-      *dst++=symbol;
+      *dst++=static_cast<char>(symbol);
     }
     if(tail)
     {
@@ -421,7 +421,7 @@ ZString* ZString::erase(ZMemory* mem,uint32_t startPos,uint32_t len)
       while(ptr<end)
       {
         symbol=getNextChar(ptr,cs);
-        *dst++=symbol;
+        *dst++=static_cast<char>(symbol);
       }
     }
     *dst=0;
@@ -477,7 +477,7 @@ ZString* ZString::insert(ZMemory* mem,uint32_t pos,ZString* str)
       char* end=data+pos;
       while(ptr<end)
       {
-        putUcs2Char(dst,*ptr);
+        putUcs2Char(dst,static_cast<char_type>(*ptr));
         ++ptr;
       }
     }else
@@ -491,7 +491,7 @@ ZString* ZString::insert(ZMemory* mem,uint32_t pos,ZString* str)
       char* end=str->data+str->size;
       while(ptr<end)
       {
-        putUcs2Char(dst,*ptr);
+        putUcs2Char(dst,static_cast<char_type>(*ptr));
         ++ptr;
       }
     }else
@@ -505,7 +505,7 @@ ZString* ZString::insert(ZMemory* mem,uint32_t pos,ZString* str)
       char* end=data+size;
       while(ptr<end)
       {
-        putUcs2Char(dst,*ptr);
+        putUcs2Char(dst,static_cast<char_type>(*ptr));
         ++ptr;
       }
     }else
@@ -522,7 +522,7 @@ uint32_t ZString::calcU8Symbols(const char* ptr,uint32_t len)
   const char* end=ptr+len;
   while(ptr<end)
   {
-    unsigned char c=*ptr;
+    unsigned char c=static_cast<unsigned char>(*ptr);
     if(c<0x80)
     {
       ptr+=1;
@@ -570,7 +570,7 @@ int ZString::ucs2ToUtf8(uint16_t symbol,char* buf)
 uint32_t ZString::calcUtf8Length(const char* ptr,const char* end,int cs)
 {
   uint16_t symbol;
-  int rv=0;
+  uint32_t rv=0;
   while(ptr<end)
   {
     symbol=getNextChar(ptr,cs);

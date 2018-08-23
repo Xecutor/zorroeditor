@@ -42,7 +42,7 @@ struct CatchInfo{
   index_type stackLevel;
   index_type callLevel;
   CatchInfo(){}
-  CatchInfo(ClassInfo** argExList,int argExCount,index_type argIdx,index_type argStackLevel,index_type argCallLevel,OpBase* argCatchOp):
+  CatchInfo(ClassInfo** argExList,index_type argExCount,index_type argIdx,index_type argStackLevel,index_type argCallLevel,OpBase* argCatchOp):
     exList(argExList),catchOp(argCatchOp),exCount(argExCount),idx(argIdx),stackLevel(argStackLevel),callLevel(argCallLevel){}
 };
 
@@ -63,7 +63,10 @@ struct ZVMContext{
   ZStack<CatchInfo,ZVMContext,&ZVMContext::onOtherStackResize> catchStack;
   Coroutine* coroutine;
 
-  ZVMContext():nextOp(0),lastOp(0),dataStack(this),callStack(this),destructorStack(this),catchStack(this),coroutine(0){}
+  ZVMContext():nextOp(0),lastOp(0),dataStack(this),callStack(this),destructorStack(this),catchStack(this),coroutine(0)
+  {
+
+  }
 
   void swap(ZVMContext& other)
   {
@@ -127,6 +130,9 @@ public:
 
   ZorroVM();
   virtual ~ZorroVM();
+
+  ZorroVM(const ZorroVM&)=delete;
+  ZorroVM& operator=(const ZorroVM&)=delete;
 
   void setEntry(OpBase* argEntry);
   void init();
@@ -269,7 +275,7 @@ public:
 
   ZMTXDEF FmtOpFunc fmtOps[vtCount];
 
-  void cleanStack(int level)
+  void cleanStack(size_t level)
   {
     /*
      * dataStack.size()==level
@@ -291,7 +297,7 @@ public:
     return ctx.dataStack.stackTop;
   }
 
-  CallFrame* pushFrame(OpDstBase* caller,OpBase* retOp,int argsCount=0,int funcIdx=0,bool selfCall=false,bool closedCall=false,bool overload=false)
+  CallFrame* pushFrame(OpDstBase* caller,OpBase* retOp,index_type argsCount=0,index_type funcIdx=0,bool selfCall=false,bool closedCall=false,bool overload=false)
   {
     CallFrame* cf=ctx.callStack.push();
     cf->callerOp=caller;
@@ -314,7 +320,7 @@ public:
     }
   }
 
-  int getArgsCount()
+  index_type getArgsCount()
   {
     return ctx.dataStack.size()-ctx.callStack.stackTop->localBase;
   }
@@ -420,11 +426,11 @@ public:
   OpBase* getFuncEntry(FuncInfo* f,CallFrame* cf);
   OpBase* getFuncEntryNArgs(FuncInfo* f,CallFrame* cf);
   void throwValue(Value* obj);
-  void callMethod(Value* obj,MethodInfo* meth,int argsCount,bool isOverload=true);
-  void callMethod(Value* obj,index_type methIdx,int argsCount,bool isOverload=true);
-  void callCMethod(Value* obj,MethodInfo* meth,int argsCount);
-  void callCMethod(Value* obj,index_type methIdx,int argsCount);
-  void callSomething(Value* func,int argsCount);
+  void callMethod(Value* obj,MethodInfo* meth,index_type argsCount,bool isOverload=true);
+  void callMethod(Value* obj,index_type methIdx,index_type argsCount,bool isOverload=true);
+  void callCMethod(Value* obj,MethodInfo* meth,index_type argsCount);
+  void callCMethod(Value* obj,index_type methIdx,index_type argsCount);
+  void callSomething(Value* func,index_type argsCount);
 
   void rxMatch(Value* l,Value* r,Value* d,OpArg* vars);
 

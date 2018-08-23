@@ -47,7 +47,7 @@ public:
   {
     return str;
   }
-  int getLength()const
+  uint32_t getLength()const
   {
     return size;
   }
@@ -214,7 +214,7 @@ public:
   static uint32_t calcHash(const char* data,const char* end)
   {
     unsigned char* ptr=(unsigned char*)data;
-    uint32_t hashCode=0x7654321**ptr;
+    uint32_t hashCode=0x7654321u*(*ptr);
     while(ptr!=(unsigned char*)end)
     {
       hashCode+=37*hashCode+*ptr;
@@ -284,10 +284,10 @@ public:
     }
     if(getCharSize()==1)
     {
-      return data[idx];
+      return static_cast<uint8_t>(data[idx]);
     }else
     {
-      return ((uint16_t*)data)[idx];
+      return (reinterpret_cast<uint16_t*>(data))[idx];
     }
   }
 
@@ -407,7 +407,7 @@ public:
 
 };
 
-inline void customformat(kst::FormatBuffer& buf,const zorro::ZStringRef& str,int w,int p)
+inline void customformat(kst::FormatBuffer& buf,const zorro::ZStringRef& str,int,int)
 {
   CStringWrap wrap(0,0,0);
   str.c_str(wrap);

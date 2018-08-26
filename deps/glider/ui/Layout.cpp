@@ -186,8 +186,8 @@ void Layout::Area::update(const Pos& argPos,const Pos& argSize)
       }else if(i.lit==litObject)
       {
         Object& o=i.as<Object>();
-        if((o.maximizeH && (lpm==lpmFromLeftToRight || lpm==lpmFromRightToLeft)) ||
-           (o.maximizeV && (lpm==lpmFromTopToBottom || lpm==lpmFromBottomToTop)))
+        if((o.maximizeH && lpm==lpmFromLeftToRight) ||
+           (o.maximizeV && lpm==lpmFromTopToBottom))
         {
           fillModes.push_back(lfmMax);
           mx.push_back(idx);

@@ -41,7 +41,7 @@ public:
     {
       sm.name=ZStringRef(&vm,name->substr(&vm,2,name->getLength()-2));
       sm.ns=new NameList;
-      sm.ns->push_back(vm.mkZString("MACRO"));
+      sm.ns->values.push_back(vm.mkZString("MACRO"));
     }else
     {
       sm.name=ZStringRef(&vm,name);

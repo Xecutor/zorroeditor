@@ -416,7 +416,7 @@ void ZIndexer::getNsCompletions(Expr* ex,const std::string& start,std::list<SymI
     do{
       if(ex->ns)
       {
-        for(NameList::iterator it=ex->ns->begin(),end=ex->ns->end();it!=end;++it)
+        for(auto it=ex->ns->values.begin(),end=ex->ns->values.end();it!=end;++it)
         {
           ptr=(ScopeSym*)ptr->getSymbols()->findSymbol(*it);
           if(!ptr)
@@ -654,7 +654,7 @@ void ZIndexer::indexate(StmtList* stmtLst)
         case stForLoop:
         {
           ForLoopStatement& fst=st.as<ForLoopStatement>();
-          for(NameList::iterator it=fst.vars->begin(),end=fst.vars->end();it!=end;++it)
+          for(auto it=fst.vars->values.begin(),end=fst.vars->values.end();it!=end;++it)
           {
             SymInfo* sym=cg.si->getSymbol(*it);
             if(!sym)
@@ -756,7 +756,7 @@ void ZIndexer::indexate(StmtList* stmtLst)
           NamespaceStatement& ns=st.as<NamespaceStatement>();
           if(ns.ns)
           {
-            for(NameList::iterator it=ns.ns->begin(),end=ns.ns->end();it!=end;++it)
+            for(auto it=ns.ns->values.begin(),end=ns.ns->values.end();it!=end;++it)
             {
               if(!cg.si->enterNamespace(*it))
               {
@@ -770,7 +770,7 @@ void ZIndexer::indexate(StmtList* stmtLst)
           indexate(ns.body);
           if(ns.ns)
           {
-            for(NameList::iterator it=ns.ns->begin(),end=ns.ns->end();it!=end;++it)
+            for(auto it=ns.ns->values.begin(),end=ns.ns->values.end();it!=end;++it)
             {
               cg.si->returnScope();
             }
@@ -978,7 +978,7 @@ void ZIndexer::fillNames(StmtList* sl)
         ScopeSym* nsPtr;
         if(ns.ns)
         {
-          for(NameList::iterator it=ns.ns->begin(),end=ns.ns->end();it!=end;++it)
+          for(auto it=ns.ns->values.begin(),end=ns.ns->values.end();it!=end;++it)
           {
             if(!cg.si->enterNamespace(*it))
             {
@@ -998,7 +998,7 @@ void ZIndexer::fillNames(StmtList* sl)
         fillNames(ns.body);
         if(ns.ns)
         {
-          for(NameList::iterator it=ns.ns->begin(),end=ns.ns->end();it!=end;++it)
+          for(auto it=ns.ns->values.begin(),end=ns.ns->values.end();it!=end;++it)
           {
             cg.si->returnScope();
           }

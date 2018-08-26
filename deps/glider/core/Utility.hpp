@@ -416,7 +416,7 @@ struct Linei{
         dy=-dy;
       }
       sy = pos.y < end.y ? 1 : -1;
-      err = dx + dy, e2; /* error value e_xy */
+      err = dx + dy;//, e2; /* error value e_xy */
       endReached=dx==0 && dy==0;
     }
     void step()

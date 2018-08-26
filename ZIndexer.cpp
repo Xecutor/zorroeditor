@@ -262,7 +262,7 @@ static Expr* findNearestSubExpr(Expr* e,int line,int col)
       if(ee && (rv=findNearestSubExpr(ee,line,col)))return rv;
     }
   }
-  if(e->e3 && isInside(line,col,e->e3) && (rv=findNearestSubExpr(e->e2,line,col)))return rv;
+  if(e->e3 && isInside(line,col,e->e3) && (rv=findNearestSubExpr(e->e3,line,col)))return rv;
   if(e->e2 && isInside(line,col,e->e2) && (rv=findNearestSubExpr(e->e2,line,col)))return rv;
   if(e->e1 && isInside(line,col,e->e1) && (rv=findNearestSubExpr(e->e1,line,col)))return rv;
   return e;

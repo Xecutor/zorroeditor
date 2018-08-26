@@ -247,7 +247,7 @@ public:
     }
     rangeIncl=true;
   }
-  Expr(FuncDeclStatement* argFunc);
+  explicit Expr(FuncDeclStatement* argFunc);
   ~Expr();
   Symbol getSymbol()
   {
@@ -325,7 +325,7 @@ struct ExprStatement:Statement{
     {
       pos=expr->pos;
       if (expr->ns)
-        pos=expr->ns->front().pos;
+        pos=expr->ns->values.front().pos;
       end=expr->end;
     }
   }

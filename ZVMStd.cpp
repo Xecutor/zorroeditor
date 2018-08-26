@@ -292,7 +292,7 @@ static Symbol parseSymbol(ZorroVM* vm,const char* name,NameList& ns)
         ZTHROW(SyntaxErrorException,FileLocation(),"Invalid symbol %{}",name);
       }
       ZStringRef str=vm->mkZString(ptr,static_cast<size_t>(col-ptr));
-      ns.push_back(str);
+      ns.values.push_back(str);
       ptr=col+2;
     }else
     {
@@ -300,7 +300,7 @@ static Symbol parseSymbol(ZorroVM* vm,const char* name,NameList& ns)
     }
   }
   nm.val=vm->mkZString(ptr);
-  return Symbol(nm,ns.empty()?0:&ns);
+  return Symbol(nm,ns.values.empty()?0:&ns);
 }
 
 static Value mkObject(ZorroVM* vm,const char* name)
@@ -333,7 +333,8 @@ void setMemberValue(ZorroVM* vm,Value obj,const char* field,const std::string& v
 {
   Value* members=obj.obj->members;
   ClassInfo* ci=obj.obj->classInfo;
-  vm->assign(members[(*ci->symMap.getPtr(field))->index],StringValue(vm->mkZString(val.c_str(),val.length())));
+  ZStringRef str = vm->mkZString(val.c_str(), val.length());
+  vm->assign(members[(*ci->symMap.getPtr(field))->index], StringValue(str));
 }
 
 void setMemberValue(ZorroVM* vm,Value obj,const char* field,int64_t val)

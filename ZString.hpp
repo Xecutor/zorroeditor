@@ -374,9 +374,9 @@ public:
   }
   operator bool()const
   {
-    return str!=0;
+    return str!= nullptr;
   }
-  const char* c_str(const CStringWrap& wrap=CStringWrap(0,0,0))const
+  const char* c_str(const CStringWrap& wrap=CStringWrap(nullptr, nullptr,0))const
   {
     return str->c_str(mem,wrap);
   }

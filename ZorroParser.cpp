@@ -699,18 +699,18 @@ Expr* ZParser::handleArrayIndex(Expr* arr,Expr* idx)
 
 NameList* ZParser::handleNameListEmpty()
 {
-  return 0;
+  return nullptr;
 }
 NameList* ZParser::handleNameListOne(Term nm)
 {
   NameList* rv=new NameList();
-  rv->push_back(getValue(nm));
+  rv->values.push_back(getValue(nm));
   return rv;
 }
 
 NameList* ZParser::handleNameList(NameList* lst,Term nm)
 {
-  lst->push_back(getValue(nm));
+  lst->values.push_back(getValue(nm));
   return lst;
 }
 
@@ -1223,7 +1223,7 @@ Expr* ZParser::handleNamespaceExpr(Term name,Expr* expr)
     expr->ns=new NameList();
   }
   expr->pos=name.pos;
-  expr->ns->push_front(getValue(name));
+  expr->ns->values.push_front(getValue(name));
   return expr;
 }
 
@@ -1249,13 +1249,13 @@ NameList* ZParser::handleNsEmpty()
 NameList* ZParser::handleNsFirst(Term name)
 {
   NameList* rv=new NameList();
-  rv->push_back(getValue(name));
+  rv->values.push_back(getValue(name));
   return rv;
 }
 
 NameList* ZParser::handleNsNext(NameList* ns,Term name)
 {
-  ns->push_back(getValue(name));
+  ns->values.push_back(getValue(name));
   return ns;
 }
 
@@ -1273,10 +1273,10 @@ ExprList* ZParser::handleNmListOne(NameList* nm)
 {
   Expr* expr=new Expr(etVar);
   expr->ns=nm;
-  expr->val=nm->back().val;
-  expr->pos=nm->back().pos;
-  nm->pop_back();
-  if(expr->ns->empty())
+  expr->val=nm->values.back().val;
+  expr->pos=nm->values.back().pos;
+  nm->values.pop_back();
+  if(expr->ns->values.empty())
   {
     delete expr->ns;
     expr->ns=0;
@@ -1291,10 +1291,10 @@ ExprList* ZParser::handleNmListNext(ExprList* lst,NameList* nm)
 {
   Expr* expr=new Expr(etVar);
   expr->ns=nm;
-  expr->val=nm->back().val;
-  expr->pos=nm->back().pos;
-  nm->pop_back();
-  if(expr->ns->empty())
+  expr->val=nm->values.back().val;
+  expr->pos=nm->values.back().pos;
+  nm->values.pop_back();
+  if(expr->ns->values.empty())
   {
     delete expr->ns;
     expr->ns=0;

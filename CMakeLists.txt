@@ -19,3 +19,9 @@ if(MSVC)
 endif()
 
 target_link_libraries(ze glider-ui zorro)
+
+add_custom_command(
+  TARGET ze POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/glider/tests/data/FSEX300.ttf $<TARGET_FILE_DIR:ze>
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/scripts/editor.zs $<TARGET_FILE_DIR:ze>
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/scripts/zeditor.zs $<TARGET_FILE_DIR:ze>)

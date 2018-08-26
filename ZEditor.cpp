@@ -322,7 +322,8 @@ static void ze_getDefLoc(ZorroVM* vm,Value* obj)
     if(si && si->name.pos.fileRd)
     {
       ZArray* arr=vm->allocZArray();
-      arr->pushAndRef(StringValue(vm->mkZString(si->name.pos.fileRd->getEntry()->name.c_str())));
+      auto filename = vm->mkZString(si->name.pos.fileRd->getEntry()->name.c_str());
+      arr->pushAndRef(StringValue(filename));
       arr->push(IntValue(si->name.pos.line));
       arr->push(IntValue(si->name.pos.col));
       vm->setResult(ArrayValue(arr));

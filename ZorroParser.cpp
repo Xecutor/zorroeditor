@@ -1159,11 +1159,16 @@ ClassParent* ZParser::handleParent(Expr* parent)
 {
   if(parent->et==etVar)
   {
-    return new ClassParent(parent->getSymbol(),0);
+    auto rv = new ClassParent(parent->getSymbol(), nullptr);
+    delete parent;
+    return rv;
   }
   if(parent->et==etCall && parent->e1->et==etVar)
   {
-    return new ClassParent(parent->e1->getSymbol(),parent->lst);
+    auto rv = new ClassParent(parent->e1->getSymbol(),parent->lst);
+    parent->lst = nullptr;
+    delete parent;
+    return rv;
   }
   throw SyntaxErrorException("Expected parent class",parent->pos);
 }

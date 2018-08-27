@@ -2029,7 +2029,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
             BlockInfo* blk = si->getBlock(bst.id);
             if(blk == nullptr)
             {
-                throw CGException("break not in loop", st.pos);
+                throw CGException("break not in the loop", st.pos);
             }
             for(int i = 0; i < blk->triesEntered; ++i)
             {

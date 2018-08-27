@@ -220,7 +220,11 @@ FormatBuffer& format(const ArgsList& a)
               }break;
               case ArgsList::vtVoidPtr:
               {
+<<<<<<< HEAD
                 buf->Grow(snprintf(buf->End(18), 18,"%p",arg->val));
+=======
+                buf->Grow(snprintf(buf->End(18), 18, "%p",arg->val));
+>>>>>>> ebdedf9ef026eacd47bcab7a46791c67839ae3aa
               }break;
               case ArgsList::vtCharPtr:
               case ArgsList::vtString:

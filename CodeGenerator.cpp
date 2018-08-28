@@ -1941,6 +1941,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
                 if(op.cannotBeFixed())
                 {
                     delete forStep;
+                    forStep = nullptr;
                 }
                 else
                 {
@@ -1952,7 +1953,11 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
                 forCor->next = forStep;
                 forStep->next = forStep;
             }
-            op.setLast(forCor->endOp = forInit->endOp = forStep->endOp = new OpAssign(temp, nil, atNul));
+            op.setLast(forCor->endOp = forInit->endOp = new OpAssign(temp, nil, atNul));
+            if(forStep)
+            {
+                forStep->endOp = forCor->endOp;
+            }
             for(auto& next : blk->nexts)
             {
                 *next = forStep;

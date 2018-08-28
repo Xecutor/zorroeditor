@@ -88,31 +88,31 @@ Statement* Debugger::findStmtRec(StmtList* subtree, FileLocation pos)
 {
     std::vector<Expr*> subExpr;
     std::vector<StmtList*> subStmts;
-    for(auto& st:*subtree)
+    for(auto& st:subtree->values)
     {
         if(st->pos.fileRd == pos.fileRd && isInside(pos.line, pos.col, st->pos, st->end))
         {
             st->getChildData(subExpr, subStmts);
             if(subStmts.empty())
             {
-                return st;
+                return st.get();
             } else
             {
                 for(auto& subSt:subStmts)
                 {
-                    if(!subSt->empty())
+                    if(!subSt->values.empty())
                     {
-                        if(isInside(pos.line, pos.col, subSt->front()->pos, subSt->back()->end))
+                        if(isInside(pos.line, pos.col, subSt->values.front()->pos, subSt->values.back()->end))
                         {
                             return findStmtRec(subSt, pos);
                         }
                     }
                 }
-                return 0;
+                return nullptr;
             }
         }
     }
-    return 0;
+    return nullptr;
 }
 
 std::string Debugger::getCurrentLine()

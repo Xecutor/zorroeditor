@@ -709,9 +709,9 @@ void CodeGenerator::fillTypes(StmtList* sl)
     {
         return;
     }
-    for(auto& it : *sl)
+    for(auto& it : sl->values)
     {
-        fillTypes(it);
+        fillTypes(it.get());
     }
 }
 
@@ -1135,7 +1135,7 @@ void CodeGenerator::fillNames(StmtList* sl, bool deep)
     {
         return;
     }
-    for(auto& it : *sl)
+    for(auto& it : sl->values)
     {
         Statement& st = *it;
         switch(st.st)
@@ -1304,7 +1304,7 @@ void CodeGenerator::fillClassNames(StmtList* sl)
     {
         return;
     }
-    for(auto& it : *sl)
+    for(auto& it : sl->values)
     {
         Statement& st = *it;
         switch(st.st)
@@ -1407,7 +1407,7 @@ CodeGenerator::OpPair CodeGenerator::generateStmtList(StmtList* sl)
     {
         return op;
     }
-    for(auto& it : *sl)
+    for(auto& it : sl->values)
     {
         if(interruptedFlow)
         {
@@ -1697,7 +1697,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
                     fp += OpPair(arg.name.pos, vm,
                                  new OpAssign(OpArg(atMember, arg.memIdx), OpArg(atLocal, arg.argIdx), OpArg()));
                 }
-                for(auto& cstptr:*currentClass->body)
+                for(auto& cstptr:currentClass->body->values)
                 {
                     auto& cst = *cstptr;
                     if(cst.st == stClassMemberDef)
@@ -1804,7 +1804,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
             op += generateStmtList(ifst.thenList);
             if(ifst.elsifList)
             {
-                for(auto& eit : *ifst.elsifList)
+                for(auto& eit : ifst.elsifList->values)
                 {
                     IfStatement& elsif = (*eit).as<IfStatement>();
                     ExprContext ec(si);
@@ -2249,7 +2249,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
                                          new OpAssign(OpArg(atMember, it.memIdx), OpArg(atLocal, it.argIdx),
                                                       OpArg()));
                         }
-                        for(auto& sit : *currentClass->body)
+                        for(auto& sit : currentClass->body->values)
                         {
                             Statement& cst = *sit;
                             if(cst.st == stClassMemberDef)
@@ -2507,7 +2507,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
                     {
                         if(def)
                         {
-                            throw CGException("Duplicate default case", def->caseBody->front()->pos);
+                            throw CGException("Duplicate default case", def->caseBody->values.front()->pos);
                         }
                         def = &it;
                         continue;
@@ -4512,7 +4512,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr, ExprContext& ec)
             if(expr->exprFunc)
             {
                 std::vector<size_t> argIndexes;
-                auto& rs = fds.body->front()->as<ReturnStatement>();
+                auto& rs = fds.body->values.front()->as<ReturnStatement>();
                 gatherNumArgs(rs.expr, argIndexes);
                 if(!argIndexes.empty())
                 {

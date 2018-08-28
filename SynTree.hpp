@@ -155,25 +155,13 @@ public:
     }
 };
 
-class StmtList : public std::list<Statement*> {
+class StmtList {
 public:
-    ~StmtList()
-    {
-        clearAndDelete();
-    }
-
-    void clearAndDelete()
-    {
-        for(auto& it : *this)
-        {
-            delete it;
-        }
-        clear();
-    }
+    std::list<std::unique_ptr<Statement>> values;
 
     void dump(std::string& out)
     {
-        for(auto& it : *this)
+        for(auto& it : values)
         {
             it->dump(out);
         }
@@ -497,9 +485,9 @@ struct IfStatement : Statement {
         }
         if(elsifList)
         {
-            for(auto stptr:*elsifList)
+            for(auto& stptr:elsifList->values)
             {
-                IfStatement* ist = (IfStatement*) stptr;
+                IfStatement* ist = (IfStatement*) stptr.get();
                 out += "elsif ";
                 ist->cond->dump(out);
                 out += "\n";

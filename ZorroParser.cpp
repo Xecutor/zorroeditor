@@ -634,7 +634,7 @@ StmtList* ZParser::handleStmtListOne(Statement* stmt)
     }
     else
     {
-        rv->push_back(stmt);
+        rv->values.emplace_back(stmt);
     }
     return rv;
 }
@@ -649,7 +649,7 @@ StmtList* ZParser::handleStmtList(StmtList* lst, Statement* stmt)
     {
         lst = new StmtList;
     }
-    lst->push_back(stmt);
+    lst->values.emplace_back(stmt);
     return lst;
 }
 
@@ -669,7 +669,7 @@ Expr* ZParser::handleShortFuncExpr(FuncParamList* lst, Expr* expr)
     Statement* st = new ReturnStatement(expr);
     st->pos = expr->pos;
     st->end = expr->end;
-    rv->func->body->push_back(st);
+    rv->func->body->values.emplace_back(st);
     return rv;
 }
 
@@ -683,7 +683,7 @@ Expr* ZParser::handleShortFuncNoArgExpr(Expr* expr)
     Statement* st = new ReturnStatement(expr);
     st->pos = expr->pos;
     st->end = expr->end;
-    rv->func->body->push_back(st);
+    rv->func->body->values.emplace_back(st);
     return rv;
 }
 
@@ -1051,13 +1051,13 @@ StmtList* ZParser::handleElsifEmpty()
 StmtList* ZParser::handleElsifFirst(Expr* cnd, StmtList* stmt)
 {
     StmtList* rv = new StmtList;
-    rv->push_back(fillPos(new IfStatement(cnd, stmt)));
+    rv->values.emplace_back(fillPos(new IfStatement(cnd, stmt)));
     return rv;
 }
 
 StmtList* ZParser::handleElsifNext(StmtList* lst, Expr* cnd, StmtList* stmt)
 {
-    lst->push_back(fillPos(new IfStatement(cnd, stmt)));
+    lst->values.emplace_back(fillPos(new IfStatement(cnd, stmt)));
     return lst;
 }
 
@@ -1157,7 +1157,7 @@ Statement* ZParser::handleFor(Name name, NameList* lst, Expr* expr, StmtList* bo
 Statement* ZParser::handleShortFor(Statement* body, Name name, NameList* lst, Expr* expr)
 {
     StmtList* bodyList = new StmtList;
-    bodyList->push_back(body);
+    bodyList->values.emplace_back(body);
     return fillPos(new ForLoopStatement(name, lst, expr, bodyList));
     //ForLoopStatement* rv=new ForLoopStatement(name,lst,expr,bodyList);
     //rv->pos=body->pos;
@@ -1512,9 +1512,9 @@ StmtList* ZParser::handleInclude(StmtList* lst, Expr* fileName)
     {
         lst = new StmtList;
     }
-    lst->splice(lst->end(), *lst2);
+    lst->values.splice(lst->values.end(), lst2->values);
     delete lst2;
-    result = 0;
+    result = nullptr;
     return lst;
 }
 

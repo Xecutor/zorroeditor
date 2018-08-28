@@ -36,7 +36,8 @@ void ZMacroExpander::expandMacro()
         }
     }
     Symbol name(p->getValue(fname));
-    name.ns = new NameList;
+    auto ns = std::make_unique<NameList>();
+    name.ns = ns.get();
     name.ns->values.emplace_back(vm->mkZString("MACRO"));
     SymInfo* macro = vm->symbols.getSymbol(name);
     if(!macro)

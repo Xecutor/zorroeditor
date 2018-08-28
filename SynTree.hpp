@@ -1709,7 +1709,10 @@ struct LiterStatement : Statement {
             ptr->dump(out);
         }
         out += "\n";
-        body->dump(out);
+        if(body)
+        {
+            body->dump(out);
+        }
         out += "end\n";
     }
 

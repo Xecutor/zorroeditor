@@ -730,7 +730,7 @@ void CodeGenerator::fillTypes(Statement* stptr)
         {
             auto& est = st.as<ExprStatement>();
             TypeInfo tmp;
-            getExprType(est.expr, tmp);
+            getExprType(est.expr.get(), tmp);
             /*if(est.expr->et==etAssign)
         {
           Expr* e=est.expr;
@@ -854,7 +854,7 @@ void CodeGenerator::fillTypes(Statement* stptr)
             auto* fi = (FuncInfo*) si->currentScope;
             if(rs.expr)
             {
-                getExprType(rs.expr, fi->rvtype);
+                getExprType(rs.expr.get(), fi->rvtype);
             } else
             {
                 fi->rvtype.merge(vtNil);
@@ -1530,7 +1530,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
         {
             ExprContext ec(si);
             size_t tcnt = si->global.acquiredTemporals.size();
-            op += generateExpr(st.as<ExprStatement>().expr, ec);
+            op += generateExpr(st.as<ExprStatement>().expr.get(), ec);
             if(si->global.acquiredTemporals.size() != tcnt)
             {
                 DPRINT("unreleased temporals after expr at %s\n", st.pos.backTrace().c_str());
@@ -2085,7 +2085,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
           throw CGException("This function cannot return value",st.pos);
         }*/
                 ExprContext ec(si);
-                OpArg res = genArgExpr(op, ret.expr, ec);
+                OpArg res = genArgExpr(op, ret.expr.get(), ec);
                 //op+=generateExpr(ret.expr,ec);
                 op += OpPair(st.pos, vm, new OpReturn(res, ret.expr->et == etRef));
             } else
@@ -2105,7 +2105,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
             }
             //FuncInfo* fi=(FuncInfo*)si->currentScope;
             ExprContext ec(si);
-            OpArg res = genArgExpr(op, ret.expr, ec);
+            OpArg res = genArgExpr(op, ret.expr.get(), ec);
             OpCondJump* jmp;
             op += jmp = new OpCondJump(ec.dst);
             jmp->pos = ret.expr->pos;
@@ -2127,7 +2127,7 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
         ec.mkTmpDst();
         op+=generateExpr(yield.expr,ec);*/
                 ExprContext ec(si);
-                OpArg dst = genArgExpr(op, yield.expr, ec);
+                OpArg dst = genArgExpr(op, yield.expr.get(), ec);
                 op += OpPair(st.pos, vm, new OpYield(dst, yield.expr->et == etRef));
             } else
             {
@@ -3010,7 +3010,7 @@ CodeGenerator::OpPair CodeGenerator::genArgs(OpPair& fp, FuncParamList* args, bo
                 OpPair op(p.defValue->pos, vm);
                 OpJumpBase* jmp = new OpJumpIfInited(ec.dst, nullptr);
                 op += jmp;
-                op += generateExpr(p.defValue, ec);
+                op += generateExpr(p.defValue.get(), ec);
                 fi->defValEntries.push_back(*op.first);
                 op.addFix(jmp->elseOp);
                 argOps += op;
@@ -4513,7 +4513,7 @@ CodeGenerator::OpPair CodeGenerator::generateExpr(Expr* expr, ExprContext& ec)
             {
                 std::vector<size_t> argIndexes;
                 auto& rs = fds.body->values.front()->as<ReturnStatement>();
-                gatherNumArgs(rs.expr, argIndexes);
+                gatherNumArgs(rs.expr.get(), argIndexes);
                 if(!argIndexes.empty())
                 {
                     if(fds.args)

@@ -2,6 +2,8 @@
 
 #include "ZorroVM.hpp"
 #include "SynTree.hpp"
+#include "ZorroParser.hpp"
+#include "CodeGenerator.hpp"
 
 namespace zorro {
 
@@ -154,6 +156,56 @@ std::string Debugger::getCurrentLine()
     } else
     {
         return std::string();
+    }
+}
+
+bool Debugger::eval(const std::string& exprStr, Value& res, std::string& err)
+{
+    FileRegistry freg;
+    auto e = freg.addEntry("eval", exprStr.c_str(), exprStr.length());
+    auto fr = freg.newReader(e);
+    ZParser p(vm);
+    p.pushReader(fr);
+    try
+    {
+        p.parse();
+        CodeGenerator cg(vm);
+        if(p.getResult()->values.empty())
+        {
+            err = "empty expression";
+            return false;
+        }
+        auto& stmt = *p.getResult()->values.front();
+        if(stmt.st != stExpr)
+        {
+            err = "expected expression";
+            return false;
+        }
+        auto& exStmt = stmt.as<ExprStatement>();
+        CodeGenerator::ExprContext ec(&vm->symbols, atStack);
+
+        if(vm->ctx.callStack.size()>1)
+        {
+            if(vm->ctx.callStack.stackTop->funcIdx)
+            {
+                auto& val = vm->symbols.globals[vm->ctx.callStack.stackTop->funcIdx];
+                vm->symbols.currentScope = val.func;
+            }
+        }
+
+        auto cp = cg.generateExpr(exStmt.expr.get(), ec);
+
+        auto save = vm->ctx.nextOp;
+        vm->ctx.nextOp = cp.first.get()->code;
+        vm->resume();
+        vm->assign(res, *vm->ctx.dataStack.stackTop);
+        vm->ctx.dataStack.pop();
+        vm->ctx.nextOp = save;
+        return true;
+    }catch(std::exception& e)
+    {
+        err = e.what();
+        return false;
     }
 }
 

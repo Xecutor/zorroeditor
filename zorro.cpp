@@ -557,6 +557,20 @@ int main(int argc, char* argv[])
                 {
                     dbg.stepInto();
                 }
+                if(cmd[0] == 'p')
+                {
+                    Value res = NilValue;
+                    std::string err;
+                    if(dbg.eval(cmd + 1, res, err))
+                    {
+                        printf("%s\n", ValueToString(&vm, res).c_str());
+                        vm.assign(res, NilValue);
+                    }
+                    else
+                    {
+                        printf("Error: %s\n", err.c_str());
+                    }
+                }
                 if(cmd[0] == 'q')
                 {
                     break;

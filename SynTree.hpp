@@ -173,7 +173,7 @@ inline void customformat(kst::FormatBuffer& buf, Expr* expr, int w, int p);
 inline void customformat(kst::FormatBuffer& buf, ExprList* lst, int w, int p);
 
 struct FuncParam : Name {
-    Expr* defValue = nullptr;
+    std::unique_ptr<Expr> defValue;
     enum ParamType {
         ptNormal,
         ptVarArgs,
@@ -189,7 +189,11 @@ struct FuncParam : Name {
     {
     }
 
-    inline ~FuncParam();
+    FuncParam(const FuncParam&) = delete;
+    FuncParam( FuncParam &&) = delete;
+    FuncParam& operator=(const FuncParam&) = delete;
+    FuncParam& operator=(FuncParam&&) = delete;
+
 
     void dump(std::string& out);
 };
@@ -299,18 +303,10 @@ public:
     static bool isTernary(ExprType et);
 };
 
-inline FuncParam::~FuncParam()
-{
-    if(defValue)
-    {
-        delete defValue;
-    }
-}
-
 inline void FuncParam::dump(std::string& out)
 {
     out += FORMAT("%{}%{}%{}", val.c_str(), defValue ? "=" : pt == ptVarArgs ? "[]" : pt == ptNamedArgs ? "{}" : "",
-            defValue);
+            defValue.get());
 }
 
 
@@ -349,9 +345,9 @@ void ExprList::dump(std::string& out, char delim)
 
 
 struct ExprStatement : Statement {
-    Expr* expr;
+    std::unique_ptr<Expr> expr;
 
-    ExprStatement(Expr* argExpr) : expr(argExpr)
+    explicit ExprStatement(Expr* argExpr) : expr(argExpr)
     {
         st = stExpr;
         if(expr)
@@ -365,23 +361,20 @@ struct ExprStatement : Statement {
         }
     }
 
-    ~ExprStatement()
-    {
-        if(expr)
-        {
-            delete expr;
-        }
-    }
+    ExprStatement(const ExprStatement&) = delete;
+    ExprStatement( ExprStatement &&) = delete;
+    ExprStatement& operator=(const ExprStatement&) = delete;
+    ExprStatement& operator=(ExprStatement&&) = delete;
 
-    void dump(std::string& out)
+    void dump(std::string& out) override
     {
         expr->dump(out);
         out += "\n";
     }
 
-    void getChildData(std::vector<Expr*>& subExpr, std::vector<StmtList*>& /*subStmt*/)
+    void getChildData(std::vector<Expr*>& subExpr, std::vector<StmtList*>& /*subStmt*/) override
     {
-        subExpr.push_back(expr);
+        subExpr.push_back(expr.get());
     }
 };
 
@@ -575,7 +568,7 @@ struct WhileStatement : Statement {
 };
 
 struct ReturnStatement : ExprStatement {
-    ReturnStatement(Expr* argExpr) : ExprStatement(argExpr)
+    explicit ReturnStatement(Expr* argExpr) : ExprStatement(argExpr)
     {
         st = stReturn;
 //    if(expr)
@@ -585,11 +578,12 @@ struct ReturnStatement : ExprStatement {
 //    }
     }
 
-    ~ReturnStatement()
-    {
-    }
+    ReturnStatement(const ReturnStatement&) = delete;
+    ReturnStatement( ReturnStatement &&) = delete;
+    ReturnStatement& operator=(const ReturnStatement&) = delete;
+    ReturnStatement& operator=(ReturnStatement&&) = delete;
 
-    void dump(std::string& out)
+    void dump(std::string& out) override
     {
         out += "return ";
         if(expr)
@@ -601,16 +595,17 @@ struct ReturnStatement : ExprStatement {
 };
 
 struct ReturnIfStatement : ReturnStatement {
-    ReturnIfStatement(Expr* argExpr) : ReturnStatement(argExpr)
+    explicit ReturnIfStatement(Expr* argExpr) : ReturnStatement(argExpr)
     {
         st = stReturnIf;
     }
 
-    ~ReturnIfStatement()
-    {
-    }
+    ReturnIfStatement(const ReturnIfStatement&) = delete;
+    ReturnIfStatement( ReturnIfStatement &&) = delete;
+    ReturnIfStatement& operator=(const ReturnIfStatement&) = delete;
+    ReturnIfStatement& operator=(ReturnIfStatement&&) = delete;
 
-    void dump(std::string& out)
+    void dump(std::string& out) override
     {
         out += "returnif ";
         if(expr)
@@ -623,16 +618,17 @@ struct ReturnIfStatement : ReturnStatement {
 
 
 struct YieldStatement : ReturnStatement {
-    YieldStatement(Expr* argExpr) : ReturnStatement(argExpr)
+    explicit YieldStatement(Expr* argExpr) : ReturnStatement(argExpr)
     {
         st = stYield;
     }
 
-    ~YieldStatement()
-    {
-    }
+    YieldStatement(const YieldStatement&) = delete;
+    YieldStatement( YieldStatement &&) = delete;
+    YieldStatement& operator=(const YieldStatement&) = delete;
+    YieldStatement& operator=(YieldStatement&&) = delete;
 
-    void dump(std::string& out)
+    void dump(std::string& out) override
     {
         out += "yield ";
         if(expr)
@@ -699,7 +695,7 @@ struct FuncDeclStatement : Statement {
                 FuncParam& fp = *fpp;
                 if(fp.defValue)
                 {
-                    subExpr.push_back(fp.defValue);
+                    subExpr.push_back(fp.defValue.get());
                 }
             }
         }
@@ -1028,7 +1024,7 @@ struct ClassDefStatement : Statement {
             {
                 if(fp->defValue)
                 {
-                    subExpr.push_back(fp->defValue);
+                    subExpr.push_back(fp->defValue.get());
                 }
             }
         }

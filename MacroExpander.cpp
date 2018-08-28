@@ -65,7 +65,7 @@ void ZMacroExpander::expandMacro()
     }
     OpCall callOp(0, OpArg(), OpArg(atStack));
     callOp.pos = name.name.pos;
-    vm->pushFrame(&callOp, 0, fi->argsCount);
+    vm->pushFrame(&callOp, nullptr, fi->argsCount);
     vm->ctx.dataStack.pushBulk(fi->localsCount);
     vm->ctx.nextOp = ((FuncInfo*) macro)->entry;
     std::string rv;

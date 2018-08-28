@@ -84,11 +84,17 @@ class Expr;
 
 struct FuncDeclStatement;
 
-class ExprList : public std::list<Expr*> {
+class ExprList {
 public:
     FileLocation pos;
+    std::list<std::unique_ptr<Expr>> values;
 
-    inline ~ExprList();
+    Expr* getSecond()const
+    {
+        auto it = values.begin();
+        ++it;
+        return it->get();
+    }
 
     inline void dump(std::string& out, char delim = ',');
 };
@@ -134,9 +140,7 @@ public:
     {
     }
 
-    virtual ~Statement()
-    {
-    }
+    virtual ~Statement() = default;
 
     virtual void dump(std::string& /*out*/)
     {
@@ -160,18 +164,18 @@ public:
 
     void clearAndDelete()
     {
-        for(iterator it = begin(), ed = end(); it != ed; ++it)
+        for(auto& it : *this)
         {
-            delete *it;
+            delete it;
         }
         clear();
     }
 
     void dump(std::string& out)
     {
-        for(iterator it = begin(), ed = end(); it != ed; ++it)
+        for(auto& it : *this)
         {
-            (*it)->dump(out);
+            it->dump(out);
         }
     }
 };
@@ -181,7 +185,7 @@ inline void customformat(kst::FormatBuffer& buf, Expr* expr, int w, int p);
 inline void customformat(kst::FormatBuffer& buf, ExprList* lst, int w, int p);
 
 struct FuncParam : Name {
-    Expr* defValue;
+    Expr* defValue = nullptr;
     enum ParamType {
         ptNormal,
         ptVarArgs,
@@ -189,7 +193,7 @@ struct FuncParam : Name {
     };
     ParamType pt;
 
-    FuncParam(const Name& argName, ParamType argPT = ptNormal) : Name(argName), defValue(0), pt(argPT)
+    explicit FuncParam(const Name& argName, ParamType argPT = ptNormal) : Name(argName), pt(argPT)
     {
     }
 
@@ -202,20 +206,19 @@ struct FuncParam : Name {
     void dump(std::string& out);
 };
 
-class FuncParamList : public std::list<FuncParam*> {
+class FuncParamList {
 public:
-    ~FuncParamList()
+    std::list<std::unique_ptr<FuncParam>> values;
+
+    size_t size()const
     {
-        for(iterator it = begin(), ed = end(); it != ed; ++it)
-        {
-            delete *it;
-        }
+        return values.size();
     }
 
     void dump(std::string& out)
     {
         bool first = true;
-        for(iterator it = begin(), ed = end(); it != ed; ++it)
+        for(auto& it:values)
         {
             if(first)
             {
@@ -225,7 +228,7 @@ public:
             {
                 out += ",";
             }
-            (*it)->dump(out);
+            it->dump(out);
         }
     }
 };
@@ -344,19 +347,11 @@ inline void customformat(kst::FormatBuffer& buf, ExprList* lst, int, int)
 }
 
 
-ExprList::~ExprList()
-{
-    for(iterator it = begin(), ed = end(); it != ed; ++it)
-    {
-        delete *it;
-    }
-}
-
 void ExprList::dump(std::string& out, char delim)
 {
-    for(iterator it = begin(), ed = end(); it != ed; ++it)
+    for(auto it = values.begin(), end = values.end(); it != end; ++it)
     {
-        if(it != begin())
+        if(it != values.begin())
         {
             out += delim;
         }
@@ -442,8 +437,14 @@ struct ListAssignStatement : Statement {
 
     void getChildData(std::vector<Expr*>& subExpr, std::vector<StmtList*>& /*subStmt*/)
     {
-        subExpr.insert(subExpr.end(), lst1->begin(), lst1->end());
-        subExpr.insert(subExpr.end(), lst2->begin(), lst2->end());
+        for(auto& it:lst1->values)
+        {
+            subExpr.push_back(it.get());
+        }
+        for(auto& it:lst2->values)
+        {
+            subExpr.push_back(it.get());
+        }
     }
 };
 
@@ -705,7 +706,7 @@ struct FuncDeclStatement : Statement {
     {
         if(args)
         {
-            for(auto& fpp:*args)
+            for(auto& fpp:args->values)
             {
                 FuncParam& fp = *fpp;
                 if(fp.defValue)
@@ -1035,7 +1036,7 @@ struct ClassDefStatement : Statement {
     {
         if(args)
         {
-            for(auto& fp:*args)
+            for(auto& fp:args->values)
             {
                 if(fp->defValue)
                 {
@@ -1045,7 +1046,10 @@ struct ClassDefStatement : Statement {
         }
         if(parent && parent->args)
         {
-            subExpr.insert(subExpr.end(), parent->args->begin(), parent->args->end());
+            for(auto& it:parent->args->values)
+            {
+                subExpr.push_back(it.get());
+            }
         }
         if(body)
         {
@@ -1160,7 +1164,10 @@ struct TryCatchStatement : Statement {
     {
         if(exList)
         {
-            subExpr.insert(subExpr.end(), exList->begin(), exList->end());
+            for(auto& it:exList->values)
+            {
+                subExpr.push_back(it.get());
+            }
         }
         if(tryBody)
         {
@@ -1384,7 +1391,10 @@ struct SwitchStatement : Statement {
             {
                 if(sc.caseExpr)
                 {
-                    subExpr.insert(subExpr.end(), sc.caseExpr->begin(), sc.caseExpr->end());
+                    for(auto& it:sc.caseExpr->values)
+                    {
+                        subExpr.push_back(it.get());
+                    }
                 }
                 if(sc.caseBody)
                 {
@@ -1439,7 +1449,10 @@ struct EnumStatement : Statement {
     {
         if(items)
         {
-            subExpr.insert(subExpr.end(), items->begin(), items->end());
+            for(auto& it:items->values)
+            {
+                subExpr.push_back(it.get());
+            }
         }
     }
 
@@ -1537,7 +1550,7 @@ struct PropStatement : Statement {
         else if(setFunc)
         {
             out += "set(";
-            out += setFunc->args->front()->val.c_str();
+            out += setFunc->args->values.front()->val.c_str();
             out += ")\n";
             if(setFunc->body)
             {

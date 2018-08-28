@@ -594,7 +594,7 @@ Statement* ZParser::handleFuncDecl(Term name, FuncParamList* args, StmtList* stm
 Statement* ZParser::handleMacroDecl(Term name, FuncParamList* args, StmtList* stmts)
 {
     l.macroExpander->registerMacro(name, args, stmts);
-    return 0;
+    return nullptr;
 }
 
 StmtList* ZParser::handleGoal(StmtList* st)
@@ -605,7 +605,7 @@ StmtList* ZParser::handleGoal(StmtList* st)
 
 StmtList* ZParser::handleStmtListEmpty()
 {
-    return 0;
+    return nullptr;
 }
 
 Statement* ZParser::handleListAssign(ExprList* e1, ExprList* e2)
@@ -616,7 +616,7 @@ Statement* ZParser::handleListAssign(ExprList* e1, ExprList* e2)
 Statement* ZParser::handleListAssign1(ExprList* e1, Expr* e2)
 {
     ExprList* lst = new ExprList;
-    lst->push_back(e2);
+    lst->values.emplace_back(e2);
     return fillPos(new ListAssignStatement(e1, lst));
 }
 
@@ -730,7 +730,7 @@ ExprList* ZParser::handleExprListOne(Expr* ex)
 {
     ExprList* rv = new ExprList;
     rv->pos = ex->pos;
-    rv->push_back(ex);
+    rv->values.emplace_back(ex);
     return rv;
 }
 
@@ -742,7 +742,7 @@ ExprList* ZParser::handleExprListOnePair(Expr* ex1, Expr* ex2)
     {
         ex1->et = etString;
     }
-    rv->push_back(new Expr(etPair, ex1, ex2));
+    rv->values.emplace_back(new Expr(etPair, ex1, ex2));
     return rv;
 }
 
@@ -750,14 +750,14 @@ ExprList* ZParser::handleExprListTwo(Expr* ex1, Expr* ex2)
 {
     ExprList* rv = new ExprList;
     rv->pos = ex1->pos;
-    rv->push_back(ex1);
-    rv->push_back(ex2);
+    rv->values.emplace_back(ex1);
+    rv->values.emplace_back(ex2);
     return rv;
 }
 
 ExprList* ZParser::handleExprListNext(ExprList* lst, Expr* e2)
 {
-    lst->push_back(e2);
+    lst->values.emplace_back(e2);
     return lst;
 }
 
@@ -767,7 +767,7 @@ ExprList* ZParser::handleExprListNextPair(ExprList* lst, Expr* e1, Expr* e2)
     {
         e1->et = etString;
     }
-    lst->push_back(new Expr(etPair, e1, e2));
+    lst->values.emplace_back(new Expr(etPair, e1, e2));
     return lst;
 }
 
@@ -936,10 +936,10 @@ Expr* ZParser::handleStr(Term t)
             }
             if(!out.empty())
             {
-                cmb->lst->push_back(new Expr(etString, mem->mkZString(&out[0], out.size())));
+                cmb->lst->values.emplace_back(new Expr(etString, mem->mkZString(&out[0], out.size())));
                 out.clear();
             }
-            cmb->lst->push_back(res);
+            cmb->lst->values.emplace_back(res);
             ptr = ptr + lastOkMatch.pos.offset - strLoc.offset + lastOkMatch.length;
             begin = ptr;
         }
@@ -955,7 +955,7 @@ Expr* ZParser::handleStr(Term t)
     }
     if(cmb && !out.empty())
     {
-        cmb->lst->push_back(new Expr(etString, mem->mkZString(&out[0], out.size())));
+        cmb->lst->values.emplace_back(new Expr(etString, mem->mkZString(&out[0], out.size())));
     }
     if(!cmb && out.empty())
     {
@@ -1318,7 +1318,7 @@ ExprList* ZParser::handleNmListOne(NameList* nm)
     }
     ExprList* rv = new ExprList;
     rv->pos = expr->pos;
-    rv->push_back(expr);
+    rv->values.emplace_back(expr);
     return rv;
 }
 
@@ -1334,7 +1334,7 @@ ExprList* ZParser::handleNmListNext(ExprList* lst, NameList* nm)
         delete expr->ns;
         expr->ns = 0;
     }
-    lst->push_back(expr);
+    lst->values.emplace_back(expr);
     return lst;
 }
 
@@ -1595,7 +1595,7 @@ Statement* ZParser::handlePropDecl(Term name, PropAccessorList* accList)
                         Name getName = rv->name.val + ".set";
                         getName.pos = acc->pos;
                         FuncParamList* args = new FuncParamList;
-                        args->push_back(new FuncParam(acc->arg));
+                        args->values.emplace_back(new FuncParam(acc->arg));
                         rv->setFunc = new FuncDeclStatement(getName, args, acc->func);
                         rv->setFunc->pos = acc->pos;
                         rv->setFunc->end = acc->end;
@@ -1767,17 +1767,17 @@ AttrDeclStatement* ZParser::handleAttrDefValue(Term name, Expr* value)
 
 Expr* ZParser::handleGetAttr(Expr* expr, ExprList* lst)
 {
-    if(lst->empty())
+    if(lst->values.empty())
     {
         throw SyntaxErrorException("property name and/or attribute expected", expr->pos);
     }
-    if(lst->size() > 2)
+    if(lst->values.size() > 2)
     {
         throw SyntaxErrorException("unexpected number of parameters for attribute getter", expr->pos);
     }
-    Expr* member = lst->size() == 2 ? lst->front() : 0;
-    Expr* attr = lst->back();
-    lst->clear();
+    Expr* member = lst->values.size() == 2 ? lst->values.front().release() : nullptr;
+    Expr* attr = lst->values.back().release();
+    lst->values.clear();
     delete lst;
     return new Expr(etGetAttr, expr, member, attr);
 }
@@ -1816,7 +1816,7 @@ FuncParamList* ZParser::handleParamListEmpty()
 FuncParamList* ZParser::handleParamListOne(FuncParam* param)
 {
     FuncParamList* rv = new FuncParamList;
-    rv->push_back(param);
+    rv->values.emplace_back(param);
     return rv;
 }
 
@@ -1826,7 +1826,7 @@ FuncParamList* ZParser::handleParamListNext(FuncParamList* lst, FuncParam* param
     {
         lst = new FuncParamList;
     }
-    lst->push_back(param);
+    lst->values.emplace_back(param);
     return lst;
 }
 
@@ -1880,13 +1880,13 @@ Expr* ZParser::handleSeqOp(Expr* cnt, Expr* var, ExprList* lst)
 ExprList* ZParser::handleSeqOpLstFirst(Expr* expr)
 {
     ExprList* rv = new ExprList;
-    rv->push_back(expr);
+    rv->values.emplace_back(expr);
     return rv;
 }
 
 ExprList* ZParser::handleSeqOpLstNext(ExprList* lst, Expr* expr)
 {
-    lst->push_back(expr);
+    lst->values.emplace_back(expr);
     return lst;
 }
 
@@ -1934,7 +1934,7 @@ Expr* ZParser::handleLiteral(Term t)
                     ++str;
                 }
             }
-            lst->push_back(new Expr(et, mem->mkZString((const char*) start, static_cast<size_t>(str - start))));
+            lst->values.emplace_back(new Expr(et, mem->mkZString((const char*) start, static_cast<size_t>(str - start))));
         }
         else if(*str == '\'' || *str == '"')
         {
@@ -1955,11 +1955,11 @@ Expr* ZParser::handleLiteral(Term t)
             strTerm.length = static_cast<size_t>(ptr - str + 1);
             if(qchar == '\'')
             {
-                lst->push_back(handleRawStr(strTerm));
+                lst->values.emplace_back(handleRawStr(strTerm));
             }
             else
             {
-                lst->push_back(handleStr(strTerm));
+                lst->values.emplace_back(handleStr(strTerm));
             }
             str = ptr + 1;
         }
@@ -1970,7 +1970,7 @@ Expr* ZParser::handleLiteral(Term t)
             {
                 ++str;
             }
-            lst->push_back(new Expr(etVar, mem->mkZString((const char*) start, static_cast<size_t>(str - start))));
+            lst->values.emplace_back(new Expr(etVar, mem->mkZString((const char*) start, static_cast<size_t>(str - start))));
         }
     }
 

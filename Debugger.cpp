@@ -170,7 +170,7 @@ bool Debugger::eval(const std::string& exprStr, Value& res, std::string& err)
     {
         p.parse();
         CodeGenerator cg(vm);
-        if(p.getResult()->values.empty())
+        if(!p.getResult() || p.getResult()->values.empty())
         {
             err = "empty expression";
             return false;
@@ -197,8 +197,16 @@ bool Debugger::eval(const std::string& exprStr, Value& res, std::string& err)
 
         auto save = vm->ctx.nextOp;
         vm->ctx.nextOp = cp.first.get()->code;
-        vm->resume();
-        vm->assign(res, *vm->ctx.dataStack.stackTop);
+        try
+        {
+            vm->resume();
+            vm->assign(res, *vm->ctx.dataStack.stackTop);
+        }
+        catch(...)
+        {
+            vm->ctx.nextOp = save;
+            throw;
+        }
         vm->ctx.dataStack.pop();
         vm->ctx.nextOp = save;
         return true;

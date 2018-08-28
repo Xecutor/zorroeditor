@@ -1938,7 +1938,14 @@ void CodeGenerator::generateStmt(OpPair& op, Statement& st)
                 forInit->next = *body.first;
                 forCor->next = *body.first;
                 op += body;
-                op.fixLast(forStep);
+                if(op.cannotBeFixed())
+                {
+                    delete forStep;
+                }
+                else
+                {
+                    op.fixLast(forStep);
+                }
             } else
             {
                 forInit->next = forStep;

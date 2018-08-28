@@ -397,6 +397,10 @@ struct AttrSym : SymInfo {
     AttrSym(const Name& argName) : SymInfo(argName, sytAttr)
     {
     }
+    AttrSym(const AttrSym&) = delete;
+    AttrSym(AttrSym&&) = delete;
+    AttrSym& operator=(const AttrSym&) = delete;
+    AttrSym& operator=(AttrSym&&) = delete;
 };
 
 struct BlockInfo {
@@ -778,6 +782,11 @@ struct ClassMember : SymInfo {
     {
     }
 
+    ClassMember(const ClassMember&) = delete;
+    ClassMember(ClassMember&&) = delete;
+    ClassMember& operator=(const ClassMember&) = delete;
+    ClassMember& operator=(ClassMember&&) = delete;
+
     void copyFrom(const ClassMember& other)
     {
         closed = other.closed;
@@ -897,6 +906,11 @@ struct ClassPropertyInfo : SymInfo {
     ClassPropertyInfo(Name argName) : SymInfo(argName, sytProperty)
     {
     }
+
+    ClassPropertyInfo(const ClassPropertyInfo&) = delete;
+    ClassPropertyInfo(ClassPropertyInfo&&) = delete;
+    ClassPropertyInfo& operator=(const ClassPropertyInfo&) = delete;
+    ClassPropertyInfo& operator=(ClassPropertyInfo&&) = delete;
 
     size_t getIdx = invalidIndexValue;
     MethodInfo* getMethod = nullptr;

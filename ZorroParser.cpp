@@ -1990,20 +1990,20 @@ Statement* ZParser::handleLiterDecl(Term name, LiterArgsList* args, StmtList* bo
 LiterArgsList* ZParser::handleLiterArgListStr(Term ident, Term arg)
 {
     LiterArgsList* rv = new LiterArgsList;
-    rv->push_back(new LiterArg(ltString, getValue(arg), getValue(ident)));
+    rv->push_back(std::make_unique<LiterArg>(ltString, getValue(arg), getValue(ident)));
     return rv;
 }
 
 LiterArgsList* ZParser::handleLiterArgListFirst(LiterArg* arg)
 {
     LiterArgsList* rv = new LiterArgsList;
-    rv->push_back(arg);
+    rv->emplace_back(arg);
     return rv;
 }
 
 LiterArgsList* ZParser::handleLiterArgListNext(LiterArgsList* lst, LiterArg* arg)
 {
-    lst->push_back(arg);
+    lst->emplace_back(arg);
     return lst;
 }
 
@@ -2044,19 +2044,19 @@ LiterArgsList* ZParser::handleLiterArgList(LiterArgsList* lst)
 
 LiterArgsList* ZParser::handleLiterArgListLastInt(LiterArgsList* lst, Term ident)
 {
-    lst->push_back(new LiterArg(ltInt, getValue(ident), Name()));
+    lst->push_back(std::make_unique<LiterArg>(ltInt, getValue(ident), Name()));
     return lst;
 }
 
 LiterArgsList* ZParser::handleLiterArgListLastDbl(LiterArgsList* lst, Term ident)
 {
-    lst->push_back(new LiterArg(ltDouble, getValue(ident), Name()));
+    lst->push_back(std::make_unique<LiterArg>(ltDouble, getValue(ident), Name()));
     return lst;
 }
 
 LiterArgsList* ZParser::handleLiterArgListLastNum(LiterArgsList* lst, Term ident)
 {
-    lst->push_back(new LiterArg(ltNumber, getValue(ident), Name()));
+    lst->push_back(std::make_unique<LiterArg>(ltNumber, getValue(ident), Name()));
     return lst;
 }
 

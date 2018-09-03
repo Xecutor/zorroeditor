@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 
 cmake_policy(SET CMP0003 NEW)
 
+if(NOT VCPKG_ROOT AND DEFINED ENV{VCPKG_ROOT})
+  set(VCPKG_ROOT $ENV{VCPKG_ROOT})
+endif()
+
 if(VCPKG_ROOT)
   include(${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 endif()
